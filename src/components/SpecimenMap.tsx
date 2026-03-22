@@ -74,11 +74,17 @@ export default function SpecimenMap({ records }: Props) {
       onEachFeature: (feature, layer) => {
         if (feature.geometry.type === "Point") {
           const p = feature.properties;
+          const isInferred = p.layer === "inferred";
+          const titleColor = isInferred ? "hsl(280,50%,55%)" : "hsl(152,35%,32%)";
+          const badge = isInferred
+            ? '<span style="background:hsl(280,50%,92%);color:hsl(280,50%,35%);padding:1px 6px;border-radius:4px;font-size:0.75em;margin-left:4px">interpolated</span>'
+            : '';
           layer.bindPopup(
-            `<div style="font-family:DM Sans,sans-serif;max-width:240px">
-              <strong style="color:hsl(152,35%,32%)">${p.scientificName}</strong><br/>
+            `<div style="font-family:DM Sans,sans-serif;max-width:260px">
+              <strong style="color:${titleColor}">${p.scientificName}</strong>${badge}<br/>
               <span style="color:hsl(150,10%,45%);font-size:0.85em">${p.eventDate} · #${p.recordNumber}</span><br/>
               <span style="font-size:0.85em">${p.locality}</span>
+              ${isInferred ? '<br/><em style="font-size:0.75em;color:hsl(280,40%,50%)">Position estimated from neighbouring stops</em>' : ''}
             </div>`
           );
         }
