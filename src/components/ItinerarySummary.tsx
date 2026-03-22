@@ -44,20 +44,6 @@ export default function ItinerarySummary({ records }: Props) {
         ))}
       </div>
 
-      {summary.collectors.length > 1 && (
-        <div>
-          <div className="flex items-center gap-1.5 text-sm font-medium mb-2">
-            <Users className="w-4 h-4 text-primary" />
-            Collecting teams
-          </div>
-          <div className="space-y-1">
-            {summary.collectors.map((c) => (
-              <p key={c} className="text-sm text-muted-foreground">{c}</p>
-            ))}
-          </div>
-        </div>
-      )}
-
       {summary.latRange && summary.lonRange && (
         <p className="text-xs text-muted-foreground font-mono">
           Extent: {summary.latRange[0].toFixed(2)}° to {summary.latRange[1].toFixed(2)}° lat,{" "}
