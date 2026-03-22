@@ -5,6 +5,7 @@ import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
 import LocationSummaries from "@/components/LocationSummaries";
 import ItinerarySummary from "@/components/ItinerarySummary";
+import CollectingAreas from "@/components/CollectingAreas";
 import SpecimenMap from "@/components/SpecimenMap";
 import GeoJSONExport from "@/components/GeoJSONExport";
 import { Button } from "@/components/ui/button";
