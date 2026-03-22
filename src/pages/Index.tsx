@@ -77,9 +77,17 @@ export default function Index() {
               <ItinerarySummary records={records} />
             </section>
 
+            {/* Collecting Areas Summary */}
+            <section className="scroll-reveal">
+              <CollectingAreas records={records} />
+            </section>
+
             {/* Map */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">Collection Map</h2>
+              <p className="text-sm text-muted-foreground">
+                Green markers = georeferenced · Purple markers = interpolated position · Dashed line = collecting route
+              </p>
               <SpecimenMap records={records} />
             </section>
 
