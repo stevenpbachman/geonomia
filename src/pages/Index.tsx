@@ -86,7 +86,7 @@ export default function Index() {
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">Collection Map</h2>
               <p className="text-sm text-muted-foreground">
-                Green markers = georeferenced · Purple markers = interpolated position · Dashed line = collecting route
+                Green markers = georeferenced specimens · Dashed polygon = minimum convex polygon (MCP)
               </p>
               <SpecimenMap records={records} />
             </section>

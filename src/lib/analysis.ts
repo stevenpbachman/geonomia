@@ -77,11 +77,7 @@ export function getItinerarySummary(records: SpecimenRecord[]) {
 }
 
 export function toGeoJSON(records: SpecimenRecord[]) {
-  const sorted = [...records].sort(
-    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
-  );
-
-  const pointFeatures = sorted
+  const pointFeatures = records
     .filter((r) => r.decimalLatitude !== null && r.decimalLongitude !== null)
     .map((r) => ({
       type: "Feature" as const,
@@ -92,7 +88,6 @@ export function toGeoJSON(records: SpecimenRecord[]) {
         recordNumber: r.recordNumber,
         recordedBy: r.recordedBy,
         locality: r.locality,
-        layer: "observed",
       },
       geometry: {
         type: "Point" as const,
@@ -100,10 +95,7 @@ export function toGeoJSON(records: SpecimenRecord[]) {
       },
     }));
 
-  // Interpolate positions for non-georeferenced records
-  const inferredFeatures = interpolateNonGeoref(sorted);
-
-  // Convex hull polygon from observed points
+  // Convex hull polygon from georeferenced points
   const coords = pointFeatures.map((f) => f.geometry.coordinates);
   const polygonFeatures: any[] = [];
 
@@ -114,9 +106,8 @@ export function toGeoJSON(records: SpecimenRecord[]) {
         type: "Feature" as const,
         properties: {
           type: "collection-extent",
-          label: "Collection area (georeferenced)",
+          label: "Minimum convex polygon (georeferenced specimens)",
           pointCount: coords.length,
-          layer: "observed",
         },
         geometry: {
           type: "Polygon" as const,
@@ -126,100 +117,10 @@ export function toGeoJSON(records: SpecimenRecord[]) {
     }
   }
 
-  // Route line connecting all stops chronologically (observed + inferred)
-  const allChronoCoords = sorted
-    .map((r) => {
-      if (r.decimalLatitude !== null && r.decimalLongitude !== null) {
-        return [r.decimalLongitude, r.decimalLatitude];
-      }
-      const inferred = inferredFeatures.find(
-        (f) => f.properties.gbifID === r.gbifID
-      );
-      return inferred ? inferred.geometry.coordinates : null;
-    })
-    .filter(Boolean) as number[][];
-
-  // Deduplicate consecutive identical coords
-  const routeCoords = allChronoCoords.filter(
-    (c, i) => i === 0 || c[0] !== allChronoCoords[i - 1][0] || c[1] !== allChronoCoords[i - 1][1]
-  );
-
-  const routeFeatures: any[] = [];
-  if (routeCoords.length >= 2) {
-    routeFeatures.push({
-      type: "Feature" as const,
-      properties: {
-        type: "itinerary-route",
-        label: "Collecting route",
-        layer: "route",
-      },
-      geometry: {
-        type: "LineString" as const,
-        coordinates: routeCoords,
-      },
-    });
-  }
-
   return {
     type: "FeatureCollection" as const,
-    features: [...polygonFeatures, ...routeFeatures, ...inferredFeatures, ...pointFeatures],
+    features: [...polygonFeatures, ...pointFeatures],
   };
-}
-
-/** Interpolate lat/lon for non-georeferenced records from chronological neighbours */
-function interpolateNonGeoref(sorted: SpecimenRecord[]) {
-  const features: {
-    type: "Feature";
-    properties: any;
-    geometry: { type: "Point"; coordinates: [number, number] };
-  }[] = [];
-
-  for (let i = 0; i < sorted.length; i++) {
-    const r = sorted[i];
-    if (r.decimalLatitude !== null && r.decimalLongitude !== null) continue;
-
-    // Find nearest previous and next georeferenced record
-    let prev: SpecimenRecord | null = null;
-    let next: SpecimenRecord | null = null;
-    for (let j = i - 1; j >= 0; j--) {
-      if (sorted[j].decimalLatitude !== null) { prev = sorted[j]; break; }
-    }
-    for (let j = i + 1; j < sorted.length; j++) {
-      if (sorted[j].decimalLatitude !== null) { next = sorted[j]; break; }
-    }
-
-    let coords: [number, number] | null = null;
-    if (prev && next) {
-      // Interpolate midpoint with small jitter to avoid overlap
-      const jitter = (Math.random() - 0.5) * 0.15;
-      coords = [
-        (prev.decimalLongitude! + next.decimalLongitude!) / 2 + jitter,
-        (prev.decimalLatitude! + next.decimalLatitude!) / 2 + jitter,
-      ];
-    } else if (prev) {
-      coords = [prev.decimalLongitude! + 0.15, prev.decimalLatitude! + 0.15];
-    } else if (next) {
-      coords = [next.decimalLongitude! - 0.15, next.decimalLatitude! - 0.15];
-    }
-
-    if (coords) {
-      features.push({
-        type: "Feature",
-        properties: {
-          gbifID: r.gbifID,
-          scientificName: r.scientificName,
-          eventDate: r.eventDate,
-          recordNumber: r.recordNumber,
-          recordedBy: r.recordedBy,
-          locality: r.locality,
-          layer: "inferred",
-          note: "Position interpolated — not georeferenced",
-        },
-        geometry: { type: "Point", coordinates: coords },
-      });
-    }
-  }
-  return features;
 }
 
 function convexHull(points: number[][]): number[][] {
