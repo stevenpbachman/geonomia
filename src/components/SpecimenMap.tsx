@@ -39,15 +39,18 @@ export default function SpecimenMap({ records }: Props) {
     }).addTo(map);
 
     const geoLayer = L.geoJSON(geojson as any, {
-      pointToLayer: (_feature, latlng) =>
-        L.circleMarker(latlng, {
-          radius: 7,
-          fillColor: "hsl(152, 35%, 32%)",
-          color: "hsl(40, 15%, 99%)",
-          weight: 2,
+      pointToLayer: (feature, latlng) => {
+        const isInferred = feature.properties?.layer === "inferred";
+        return L.circleMarker(latlng, {
+          radius: isInferred ? 6 : 7,
+          fillColor: isInferred ? "hsl(280, 50%, 55%)" : "hsl(152, 35%, 32%)",
+          color: isInferred ? "hsl(280, 30%, 85%)" : "hsl(40, 15%, 99%)",
+          weight: isInferred ? 1.5 : 2,
           opacity: 1,
-          fillOpacity: 0.85,
-        }),
+          fillOpacity: isInferred ? 0.6 : 0.85,
+          dashArray: isInferred ? "3 3" : undefined,
+        });
+      },
       style: (feature) => {
         if (feature?.geometry.type === "Polygon") {
           return {
@@ -56,6 +59,14 @@ export default function SpecimenMap({ records }: Props) {
             fillColor: "hsl(28, 60%, 55%)",
             fillOpacity: 0.1,
             dashArray: "6 4",
+          };
+        }
+        if (feature?.properties?.type === "itinerary-route") {
+          return {
+            color: "hsl(280, 50%, 55%)",
+            weight: 2,
+            opacity: 0.6,
+            dashArray: "8 6",
           };
         }
         return {};
