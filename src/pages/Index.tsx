@@ -3,10 +3,11 @@ import { SpecimenRecord } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
-import LocationSummaries from "@/components/LocationSummaries";
 import ItinerarySummary from "@/components/ItinerarySummary";
 import CollectingAreas from "@/components/CollectingAreas";
 import SpecimenMap from "@/components/SpecimenMap";
+import LocationCarousel from "@/components/LocationCarousel";
+import CollectingTeams from "@/components/CollectingTeams";
 import GeoJSONExport from "@/components/GeoJSONExport";
 import { Button } from "@/components/ui/button";
 import { Leaf, Database } from "lucide-react";
@@ -24,7 +25,6 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="container max-w-5xl py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -53,7 +53,6 @@ export default function Index() {
       </header>
 
       <main className="container max-w-5xl py-8 space-y-8">
-        {/* Data Input */}
         {showInput && (
           <section className="scroll-reveal space-y-4">
             <DataInput onDataLoaded={handleLoad} />
@@ -72,26 +71,26 @@ export default function Index() {
 
         {records && (
           <>
-            {/* Overall Summary */}
+            {/* 1. Itinerary Overview */}
             <section className="scroll-reveal">
               <ItinerarySummary records={records} />
             </section>
 
-            {/* Collecting Areas Summary */}
-            <section className="scroll-reveal">
-              <CollectingAreas records={records} />
-            </section>
-
-            {/* Map */}
+            {/* 2. Map (right after overview) */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">Collection Map</h2>
               <p className="text-sm text-muted-foreground">
-                Green markers = georeferenced specimens · Dashed polygon = minimum convex polygon (MCP)
+                Green markers = georeferenced specimens · Dashed orange polygon = minimum convex polygon (MCP)
               </p>
               <SpecimenMap records={records} />
             </section>
 
-            {/* Location Summaries */}
+            {/* 3. Collecting Areas narrative */}
+            <section className="scroll-reveal">
+              <CollectingAreas records={records} />
+            </section>
+
+            {/* 4. Location carousel */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">
                 Locations Visited
@@ -99,12 +98,17 @@ export default function Index() {
                   ({locationSummaries.length} stops)
                 </span>
               </h2>
-              <LocationSummaries summaries={locationSummaries} />
+              <LocationCarousel summaries={locationSummaries} />
             </section>
 
-            {/* GeoJSON */}
+            {/* 5. GeoJSON */}
             <section className="scroll-reveal">
               <GeoJSONExport records={records} />
+            </section>
+
+            {/* 6. Collecting Teams (bottom) */}
+            <section className="scroll-reveal">
+              <CollectingTeams records={records} />
             </section>
           </>
         )}
