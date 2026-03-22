@@ -5,6 +5,7 @@ import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
 import LocationSummaries from "@/components/LocationSummaries";
 import ItinerarySummary from "@/components/ItinerarySummary";
+import CollectingAreas from "@/components/CollectingAreas";
 import SpecimenMap from "@/components/SpecimenMap";
 import GeoJSONExport from "@/components/GeoJSONExport";
 import { Button } from "@/components/ui/button";
@@ -76,9 +77,17 @@ export default function Index() {
               <ItinerarySummary records={records} />
             </section>
 
+            {/* Collecting Areas Summary */}
+            <section className="scroll-reveal">
+              <CollectingAreas records={records} />
+            </section>
+
             {/* Map */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">Collection Map</h2>
+              <p className="text-sm text-muted-foreground">
+                Green markers = georeferenced · Purple markers = interpolated position · Dashed line = collecting route
+              </p>
               <SpecimenMap records={records} />
             </section>
 
