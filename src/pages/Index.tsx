@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { SpecimenRecord } from "@/lib/types";
+import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
 import ItinerarySummary from "@/components/ItinerarySummary";
-import CollectingAreas from "@/components/CollectingAreas";
 import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
 import CollectingTeams from "@/components/CollectingTeams";
@@ -15,6 +14,7 @@ import { Leaf, Database } from "lucide-react";
 export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
   const [showInput, setShowInput] = useState(true);
+  const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
 
   const handleLoad = (data: SpecimenRecord[]) => {
     setRecords(data);
@@ -71,26 +71,18 @@ export default function Index() {
 
         {records && (
           <>
-            {/* 1. Itinerary Overview */}
             <section className="scroll-reveal">
               <ItinerarySummary records={records} />
             </section>
 
-            {/* 2. Map (right after overview) */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">Collection Map</h2>
               <p className="text-sm text-muted-foreground">
-                Green markers = georeferenced specimens · Dashed orange polygon = minimum convex polygon (MCP)
+                Green markers = georeferenced specimens · Dashed orange polygon = MCP · Yellow highlight = selected stop
               </p>
-              <SpecimenMap records={records} />
+              <SpecimenMap records={records} highlightedLocation={highlightedLocation} />
             </section>
 
-            {/* 3. Collecting Areas narrative */}
-            <section className="scroll-reveal">
-              <CollectingAreas records={records} />
-            </section>
-
-            {/* 4. Location carousel */}
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">
                 Locations Visited
@@ -98,15 +90,16 @@ export default function Index() {
                   ({locationSummaries.length} stops)
                 </span>
               </h2>
-              <LocationCarousel summaries={locationSummaries} />
+              <LocationCarousel
+                summaries={locationSummaries}
+                onLocationSelect={setHighlightedLocation}
+              />
             </section>
 
-            {/* 5. GeoJSON */}
             <section className="scroll-reveal">
               <GeoJSONExport records={records} />
             </section>
 
-            {/* 6. Collecting Teams (bottom) */}
             <section className="scroll-reveal">
               <CollectingTeams records={records} />
             </section>

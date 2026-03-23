@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { SpecimenRecord } from "@/lib/types";
+import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
 
-// Fix default marker icon
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 const DefaultIcon = L.icon({ iconUrl: icon, shadowUrl: iconShadow, iconAnchor: [12, 41] });
@@ -12,23 +11,23 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 interface Props {
   records: SpecimenRecord[];
+  highlightedLocation?: LocationSummary | null;
 }
 
-export default function SpecimenMap({ records }: Props) {
+export default function SpecimenMap({ records, highlightedLocation }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const highlightRef = useRef<L.CircleMarker | null>(null);
 
   const geojson = toGeoJSON(records);
 
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current) return;
-
-    // Clean up previous map
     if (mapRef.current) {
       mapRef.current.remove();
       mapRef.current = null;
     }
-
     if (geojson.features.length === 0) return;
 
     const map = L.map(containerRef.current).setView([0, 0], 3);
@@ -38,17 +37,16 @@ export default function SpecimenMap({ records }: Props) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
-    const geoLayer = L.geoJSON(geojson as any, {
-      pointToLayer: (_feature, latlng) => {
-        return L.circleMarker(latlng, {
+    L.geoJSON(geojson as any, {
+      pointToLayer: (_feature, latlng) =>
+        L.circleMarker(latlng, {
           radius: 7,
           fillColor: "hsl(152, 35%, 32%)",
           color: "hsl(40, 15%, 99%)",
           weight: 2,
           opacity: 1,
           fillOpacity: 0.85,
-        });
-      },
+        }),
       style: (feature) => {
         if (feature?.geometry.type === "Polygon") {
           return {
@@ -75,7 +73,6 @@ export default function SpecimenMap({ records }: Props) {
       },
     }).addTo(map);
 
-    // Fit bounds
     const points = geojson.features
       .filter((f) => f.geometry.type === "Point")
       .map((f) => f.geometry.coordinates as [number, number]);
@@ -92,6 +89,33 @@ export default function SpecimenMap({ records }: Props) {
       mapRef.current = null;
     };
   }, [records]);
+
+  // Highlight selected location
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (highlightRef.current) {
+      highlightRef.current.remove();
+      highlightRef.current = null;
+    }
+
+    if (highlightedLocation?.lat != null && highlightedLocation?.lon != null) {
+      const marker = L.circleMarker(
+        [highlightedLocation.lat, highlightedLocation.lon],
+        {
+          radius: 14,
+          fillColor: "hsl(45, 90%, 55%)",
+          color: "hsl(45, 90%, 40%)",
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.4,
+        }
+      ).addTo(map);
+      highlightRef.current = marker;
+      map.panTo([highlightedLocation.lat, highlightedLocation.lon], { animate: true });
+    }
+  }, [highlightedLocation]);
 
   if (geojson.features.length === 0) {
     return (
