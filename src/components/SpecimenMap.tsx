@@ -129,7 +129,7 @@ export default function SpecimenMap({ records, highlightedLocation }: Props) {
     <div
       ref={containerRef}
       className="rounded-lg overflow-hidden border shadow-sm"
-      style={{ height: 480 }}
+      style={{ height: 340 }}
     />
   );
 }
