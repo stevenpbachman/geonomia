@@ -1,9 +1,14 @@
 import { SpecimenRecord, LocationSummary } from "./types";
 
 export function getLocationSummaries(records: SpecimenRecord[]): LocationSummary[] {
-  const sorted = [...records].sort(
-    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
-  );
+  const sorted = [...records].sort((a, b) => {
+    const dateDiff = new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    // Within same date, sort by record number numerically
+    const numA = parseInt(a.recordNumber, 10) || 0;
+    const numB = parseInt(b.recordNumber, 10) || 0;
+    return numA - numB;
+  });
 
   const grouped = new Map<string, SpecimenRecord[]>();
   for (const r of sorted) {

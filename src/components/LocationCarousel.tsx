@@ -1,21 +1,30 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { LocationSummary } from "@/lib/types";
-import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   summaries: LocationSummary[];
+  onLocationSelect?: (summary: LocationSummary | null) => void;
 }
 
-export default function LocationCarousel({ summaries }: Props) {
+export default function LocationCarousel({ summaries, onLocationSelect }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const sliderRef = useRef<HTMLInputElement>(null);
 
   const loc = summaries[currentIndex];
   if (!loc) return null;
 
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < summaries.length - 1;
+
+  const goTo = (idx: number) => {
+    setCurrentIndex(idx);
+    const s = summaries[idx];
+    onLocationSelect?.(s?.lat !== null && s?.lon !== null ? s : null);
+  };
+
+  // Fire initial highlight on mount-like first render
+  // We'll trigger on index change instead
 
   return (
     <div className="space-y-3">
@@ -25,12 +34,11 @@ export default function LocationCarousel({ summaries }: Props) {
           {summaries[0]?.date}
         </span>
         <input
-          ref={sliderRef}
           type="range"
           min={0}
           max={summaries.length - 1}
           value={currentIndex}
-          onChange={(e) => setCurrentIndex(Number(e.target.value))}
+          onChange={(e) => goTo(Number(e.target.value))}
           className="flex-1 h-2 accent-primary cursor-pointer"
         />
         <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
@@ -44,7 +52,7 @@ export default function LocationCarousel({ summaries }: Props) {
           variant="ghost"
           size="icon"
           disabled={!canPrev}
-          onClick={() => setCurrentIndex((i) => i - 1)}
+          onClick={() => goTo(currentIndex - 1)}
           className="flex-shrink-0 self-center"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -56,14 +64,14 @@ export default function LocationCarousel({ summaries }: Props) {
               {currentIndex + 1}
             </div>
             <div className="flex-1 min-w-0 space-y-2">
-              {/* Date & coords */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+              {/* Date */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="font-mono">{loc.date}</span>
                 {loc.lat !== null && loc.lon !== null && (
                   <>
                     <span className="text-border">·</span>
-                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary" />
                     <span className="font-mono text-xs">
                       {loc.lat.toFixed(2)}°, {loc.lon.toFixed(2)}°
                     </span>
@@ -71,31 +79,32 @@ export default function LocationCarousel({ summaries }: Props) {
                 )}
               </div>
 
-              {/* Locality */}
-              <p className="text-sm font-medium leading-snug">{loc.locality}</p>
-
-              {/* Specimens */}
-              <div className="space-y-1.5">
+              {/* Specimens — collector & number prominent */}
+              <div className="space-y-2">
                 {loc.specimens.map((s) => (
                   <div
                     key={s.gbifID}
-                    className="flex items-start gap-2 text-xs bg-muted rounded-md px-2.5 py-1.5"
+                    className="bg-muted rounded-md px-3 py-2 space-y-1"
                   >
-                    <Leaf className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <em className="text-foreground">
-                        {s.scientificName.split(" ").slice(0, 2).join(" ")}
-                      </em>
-                      <div className="flex items-center gap-2 text-muted-foreground mt-0.5 flex-wrap">
-                        <span className="font-mono">#{s.recordNumber}</span>
-                        <span className="text-border">·</span>
-                        <User className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{s.recordedBy}</span>
-                      </div>
+                    {/* Collector + number — first line, prominent */}
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                      <span className="truncate">{s.recordedBy}</span>
+                      <span className="text-border">·</span>
+                      <Hash className="w-3 h-3 flex-shrink-0" />
+                      <span className="font-mono font-semibold">{s.recordNumber}</span>
+                    </div>
+                    {/* Scientific name */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Leaf className="w-3 h-3 text-primary flex-shrink-0" />
+                      <em>{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Locality */}
+              <p className="text-xs text-muted-foreground leading-snug">{loc.locality}</p>
             </div>
           </div>
         </div>
@@ -104,7 +113,7 @@ export default function LocationCarousel({ summaries }: Props) {
           variant="ghost"
           size="icon"
           disabled={!canNext}
-          onClick={() => setCurrentIndex((i) => i + 1)}
+          onClick={() => goTo(currentIndex + 1)}
           className="flex-shrink-0 self-center"
         >
           <ChevronRight className="w-5 h-5" />
