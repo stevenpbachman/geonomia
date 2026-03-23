@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LocationSummary } from "@/lib/types";
 import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,12 @@ interface Props {
 
 export default function LocationCarousel({ summaries, onLocationSelect }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    const first = summaries[0];
+    onLocationSelect?.(first?.lat !== null && first?.lon !== null ? first : null);
+  }, [summaries, onLocationSelect]);
 
   const loc = summaries[currentIndex];
   if (!loc) return null;
@@ -23,12 +29,8 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
     onLocationSelect?.(s?.lat !== null && s?.lon !== null ? s : null);
   };
 
-  // Fire initial highlight on mount-like first render
-  // We'll trigger on index change instead
-
   return (
     <div className="space-y-3">
-      {/* Scrubber bar */}
       <div className="flex items-center gap-3">
         <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
           {summaries[0]?.date}
@@ -46,7 +48,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
         </span>
       </div>
 
-      {/* Card with arrows */}
       <div className="flex items-stretch gap-2">
         <Button
           variant="ghost"
@@ -64,7 +65,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
               {currentIndex + 1}
             </div>
             <div className="flex-1 min-w-0 space-y-2">
-              {/* Date */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="font-mono">{loc.date}</span>
@@ -79,14 +79,12 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
                 )}
               </div>
 
-              {/* Specimens — collector & number prominent */}
               <div className="space-y-2">
                 {loc.specimens.map((s) => (
                   <div
                     key={s.gbifID}
                     className="bg-muted rounded-md px-3 py-2 space-y-1"
                   >
-                    {/* Collector + number — first line, prominent */}
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                       <span className="truncate">{s.recordedBy}</span>
@@ -94,7 +92,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
                       <Hash className="w-3 h-3 flex-shrink-0" />
                       <span className="font-mono font-semibold">{s.recordNumber}</span>
                     </div>
-                    {/* Scientific name */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Leaf className="w-3 h-3 text-primary flex-shrink-0" />
                       <em>{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
@@ -103,7 +100,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
                 ))}
               </div>
 
-              {/* Locality */}
               <p className="text-xs text-muted-foreground leading-snug">{loc.locality}</p>
             </div>
           </div>
@@ -120,7 +116,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
         </Button>
       </div>
 
-      {/* Position indicator */}
       <p className="text-center text-xs text-muted-foreground">
         Stop {currentIndex + 1} of {summaries.length}
       </p>
