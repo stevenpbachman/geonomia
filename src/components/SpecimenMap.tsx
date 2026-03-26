@@ -272,6 +272,24 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     setMeasureDistance(null);
   };
 
+  // Georef placement mode
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !georefMode || measuring) return;
+
+    if (containerRef.current) containerRef.current.style.cursor = "crosshair";
+
+    const handler = (e: L.LeafletMouseEvent) => {
+      onGeorefClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    };
+    map.on("click", handler);
+
+    return () => {
+      map.off("click", handler);
+      if (containerRef.current) containerRef.current.style.cursor = "";
+    };
+  }, [georefMode, measuring, onGeorefClick]);
+
   if (geojson.features.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 rounded-lg bg-muted">
