@@ -11,6 +11,13 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/datasette": {
+        target: "http://10.152.129.252:8001",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/datasette/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
