@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
@@ -21,7 +21,7 @@ export default function Index() {
     setShowInput(false);
   };
 
-  const locationSummaries = records ? getLocationSummaries(records) : [];
+  const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
 
   return (
     <div className="min-h-screen bg-background">
