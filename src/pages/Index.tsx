@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { SpecimenRecord, LocationSummary } from "@/lib/types";
+import { useState, useMemo, useCallback } from "react";
+import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
@@ -9,9 +9,11 @@ import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
 import CollectingTeams from "@/components/CollectingTeams";
 import GeoJSONExport from "@/components/GeoJSONExport";
+import GeoreferenceForm from "@/components/GeoreferenceForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Leaf, Database, Search, Upload } from "lucide-react";
+import { Leaf, Database, Search, Upload, MapPin, Download } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
