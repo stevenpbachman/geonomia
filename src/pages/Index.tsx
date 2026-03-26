@@ -33,6 +33,40 @@ export default function Index() {
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
 
+  const ungeoreferencedRecords = useMemo(
+    () => records?.filter((r) => r.decimalLatitude == null || r.decimalLongitude == null) ?? [],
+    [records]
+  );
+
+  const handleGeorefClick = useCallback((coords: { lat: number; lng: number }) => {
+    setMapClickCoords(coords);
+    setGeorefMode(false);
+  }, []);
+
+  const handleGeorefSubmit = useCallback((suggestion: GeoreferenceSuggestion) => {
+    setSuggestions((prev) => [...prev.filter((s) => s.gbifID !== suggestion.gbifID), suggestion]);
+    setGeorefTarget(null);
+    setGeorefMode(false);
+    setMapClickCoords(null);
+  }, []);
+
+  const exportSuggestions = useCallback(() => {
+    if (suggestions.length === 0) return;
+    const headers = Object.keys(suggestions[0]);
+    const csv = [
+      headers.join(","),
+      ...suggestions.map((s) => headers.map((h) => JSON.stringify((s as any)[h] ?? "")).join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "georeference_suggestions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${suggestions.length} suggestion(s)`);
+  }, [suggestions]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
