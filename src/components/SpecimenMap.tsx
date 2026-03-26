@@ -6,7 +6,7 @@ import * as GeocoderModule from "leaflet-control-geocoder";
 import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
 import { Button } from "@/components/ui/button";
-import { Ruler, X } from "lucide-react";
+import { Ruler, X, Crosshair } from "lucide-react";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -343,6 +343,14 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
           </div>
         )}
       </div>
+
+      {/* Georef mode indicator */}
+      {georefMode && !measuring && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg animate-pulse flex items-center gap-2">
+          <Crosshair className="w-3.5 h-3.5" />
+          Click map to place georeference
+        </div>
+      )}
 
       <div
         ref={containerRef}
