@@ -19,10 +19,16 @@ export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
   const [showInput, setShowInput] = useState(true);
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
+  const [georefTarget, setGeorefTarget] = useState<SpecimenRecord | null>(null);
+  const [georefMode, setGeorefMode] = useState(false);
+  const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [suggestions, setSuggestions] = useState<GeoreferenceSuggestion[]>([]);
 
   const handleLoad = (data: SpecimenRecord[]) => {
     setRecords(data);
     setShowInput(false);
+    setSuggestions([]);
+    setGeorefTarget(null);
   };
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
