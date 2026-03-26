@@ -1,4 +1,4 @@
-const DATASETTE_BASE = "http://10.152.129.252:8001";
+const DATASETTE_BASE = "/datasette";
 const DB = "geonomia";
 
 export interface ClusterResult {
