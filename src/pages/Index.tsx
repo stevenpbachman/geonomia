@@ -3,13 +3,15 @@ import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
+import ClusterSearch from "@/components/ClusterSearch";
 import ItinerarySummary from "@/components/ItinerarySummary";
 import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
 import CollectingTeams from "@/components/CollectingTeams";
 import GeoJSONExport from "@/components/GeoJSONExport";
 import { Button } from "@/components/ui/button";
-import { Leaf, Database } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Leaf, Database, Search, Upload } from "lucide-react";
 
 export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
