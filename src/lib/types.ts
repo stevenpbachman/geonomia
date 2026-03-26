@@ -17,3 +17,18 @@ export interface LocationSummary {
   lat: number | null;
   lon: number | null;
 }
+
+export interface GeoreferenceSuggestion {
+  gbifID: string;
+  decimalLatitude: number;
+  decimalLongitude: number;
+  geodeticDatum: string;
+  coordinateUncertaintyInMeters: number | null;
+  coordinatePrecision: number | null;
+  pointRadiusSpatialFit: number | null;
+  georeferenceProtocol: string;
+  georeferenceSources: string;
+  georeferenceRemarks: string;
+  georeferencedBy: string;
+  georeferencedDate: string;
+}

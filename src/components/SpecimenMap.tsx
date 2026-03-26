@@ -6,7 +6,7 @@ import * as GeocoderModule from "leaflet-control-geocoder";
 import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
 import { Button } from "@/components/ui/button";
-import { Ruler, X } from "lucide-react";
+import { Ruler, X, Crosshair } from "lucide-react";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -20,6 +20,9 @@ const Geocoder = (GeocoderModule as any).geocoders
 interface Props {
   records: SpecimenRecord[];
   highlightedLocation?: LocationSummary | null;
+  /** When true, next map click fires onGeorefClick instead of normal behavior */
+  georefMode?: boolean;
+  onGeorefClick?: (coords: { lat: number; lng: number }) => void;
 }
 
 const TILE_LAYERS: Record<string, { url: string; attribution: string; name: string }> = {
@@ -50,7 +53,7 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)} km`;
 }
 
-export default function SpecimenMap({ records, highlightedLocation }: Props) {
+export default function SpecimenMap({ records, highlightedLocation, georefMode, onGeorefClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const highlightRef = useRef<L.CircleMarker | null>(null);
@@ -269,6 +272,24 @@ export default function SpecimenMap({ records, highlightedLocation }: Props) {
     setMeasureDistance(null);
   };
 
+  // Georef placement mode
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !georefMode || measuring) return;
+
+    if (containerRef.current) containerRef.current.style.cursor = "crosshair";
+
+    const handler = (e: L.LeafletMouseEvent) => {
+      onGeorefClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    };
+    map.on("click", handler);
+
+    return () => {
+      map.off("click", handler);
+      if (containerRef.current) containerRef.current.style.cursor = "";
+    };
+  }, [georefMode, measuring, onGeorefClick]);
+
   if (geojson.features.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 rounded-lg bg-muted">
@@ -322,6 +343,14 @@ export default function SpecimenMap({ records, highlightedLocation }: Props) {
           </div>
         )}
       </div>
+
+      {/* Georef mode indicator */}
+      {georefMode && !measuring && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg animate-pulse flex items-center gap-2">
+          <Crosshair className="w-3.5 h-3.5" />
+          Click map to place georeference
+        </div>
+      )}
 
       <div
         ref={containerRef}
