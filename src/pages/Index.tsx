@@ -57,17 +57,34 @@ export default function Index() {
       <main className="container max-w-5xl py-8 space-y-8">
         {showInput && (
           <section className="scroll-reveal space-y-4">
-            <DataInput onDataLoaded={handleLoad} />
-            {!records && (
-              <div className="text-center pt-2">
-                <button
-                  onClick={() => handleLoad(sampleData)}
-                  className="text-sm text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
-                >
-                  Or load sample data (Lewis, G.P. — Brazil, Jan 1985)
-                </button>
-              </div>
-            )}
+            <Tabs defaultValue="search">
+              <TabsList>
+                <TabsTrigger value="search" className="gap-2">
+                  <Search className="w-3.5 h-3.5" />
+                  Search clusters
+                </TabsTrigger>
+                <TabsTrigger value="upload" className="gap-2">
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload CSV/TSV
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="search" className="mt-4">
+                <ClusterSearch onDataLoaded={handleLoad} />
+              </TabsContent>
+              <TabsContent value="upload" className="mt-4">
+                <DataInput onDataLoaded={handleLoad} />
+                {!records && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => handleLoad(sampleData)}
+                      className="text-sm text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
+                    >
+                      Or load sample data (Lewis, G.P. — Brazil, Jan 1985)
+                    </button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </section>
         )}
 
