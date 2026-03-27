@@ -221,9 +221,9 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       const layer = L.geoJSON(gadmData.geojson, {
         style: () => ({
           color: "hsl(270, 50%, 55%)",
-          weight: 1.5,
-          fillColor: "hsl(270, 50%, 55%)",
-          fillOpacity: 0.04,
+          weight: 2,
+          fillColor: "hsl(270, 50%, 70%)",
+          fillOpacity: 0.15,
           dashArray: "4 3",
         }),
         onEachFeature: (feature, layer) => {
