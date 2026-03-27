@@ -44,8 +44,8 @@ const TILE_LAYERS: Record<string, { url: string; attribution: string; name: stri
   },
   terrain: {
     name: "Terrain",
-    url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
-    attribution: '&copy; Stamen Design',
+    url: "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg",
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a>',
   },
 };
 
@@ -87,11 +87,11 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     const layer = TILE_LAYERS[activeLayer];
     tileLayerRef.current = L.tileLayer(layer.url, { attribution: layer.attribution }).addTo(map);
 
-    // Geocoder search
+    // Geocoder search — position top-center
     try {
       const geocoderControl = (Geocoder as any).geocoder
-        ? (Geocoder as any).geocoder({ defaultMarkGeocode: false })
-        : new ((Geocoder as any).Geocoder || (L.Control as any).Geocoder)({ defaultMarkGeocode: false });
+        ? (Geocoder as any).geocoder({ defaultMarkGeocode: false, position: "topleft" })
+        : new ((Geocoder as any).Geocoder || (L.Control as any).Geocoder)({ defaultMarkGeocode: false, position: "topleft" });
 
       geocoderControl.on("markgeocode", (e: any) => {
         const bbox = e.geocode.bbox;
@@ -107,6 +107,13 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
           .openPopup();
       });
       geocoderControl.addTo(map);
+
+      // Move geocoder to the top-center custom container
+      const geocoderEl = containerRef.current?.querySelector(".leaflet-control-geocoder") as HTMLElement;
+      const topCenterContainer = containerRef.current?.querySelector(".leaflet-top-center") as HTMLElement;
+      if (geocoderEl && topCenterContainer) {
+        topCenterContainer.appendChild(geocoderEl);
+      }
     } catch {
       // Geocoder failed to initialize — skip
     }
@@ -163,6 +170,21 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
         points.map(([lng, lat]) => [lat, lng] as [number, number])
       );
       map.fitBounds(bounds.pad(0.3));
+    }
+
+    // Create top-center control container if it doesn't exist
+    const mapContainer = map.getContainer();
+    let topCenter = mapContainer.querySelector(".leaflet-top-center") as HTMLElement;
+    if (!topCenter) {
+      topCenter = document.createElement("div");
+      topCenter.className = "leaflet-top-center";
+      topCenter.style.cssText = "position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:auto;";
+      mapContainer.appendChild(topCenter);
+    }
+    // Try moving geocoder again after container creation
+    const geocoderEl = mapContainer.querySelector(".leaflet-control-geocoder") as HTMLElement;
+    if (geocoderEl && topCenter) {
+      topCenter.appendChild(geocoderEl);
     }
 
     return () => {
@@ -283,19 +305,16 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     const map = mapRef.current;
     if (!map) return;
 
-    // Cleanup previous handler
     if (measureHandlerRef.current) {
       map.off("click", measureHandlerRef.current);
       measureHandlerRef.current = null;
     }
 
     if (!measuring) {
-      // Reset cursor
       if (containerRef.current) containerRef.current.style.cursor = "";
       return;
     }
 
-    // Set crosshair cursor
     if (containerRef.current) containerRef.current.style.cursor = "crosshair";
     measurePointsRef.current = [];
     measureLayerRef.current?.clearLayers();
@@ -305,7 +324,6 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       const pts = measurePointsRef.current;
       pts.push(e.latlng);
 
-      // Add point marker
       L.circleMarker(e.latlng, {
         radius: 5,
         fillColor: "hsl(200, 80%, 50%)",
@@ -315,14 +333,12 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       }).addTo(measureLayerRef.current!);
 
       if (pts.length > 1) {
-        // Draw line segment
         L.polyline([pts[pts.length - 2], pts[pts.length - 1]], {
           color: "hsl(200, 80%, 50%)",
           weight: 3,
           dashArray: "8 4",
         }).addTo(measureLayerRef.current!);
 
-        // Calculate total distance
         let total = 0;
         for (let i = 1; i < pts.length; i++) {
           total += pts[i - 1].distanceTo(pts[i]);
