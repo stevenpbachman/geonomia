@@ -150,6 +150,7 @@ export default function LocationCarousel({
   georefMode,
   onRequestMapClick,
   onGeorefSubmit,
+  mapSlot,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
