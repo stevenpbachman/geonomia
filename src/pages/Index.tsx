@@ -54,8 +54,17 @@ export default function Index() {
     setGeorefMode(false);
   }, []);
 
-  const handleGeorefSubmit = useCallback((suggestion: GeoreferenceSuggestion) => {
-    const updated = [...suggestions.filter(s => s.gbifID !== suggestion.gbifID), suggestion];
+  // Find all specimens at the same locality as the georef target
+  const georefLocalitySpecimens = useMemo(() => {
+    if (!georefSpecimen || !records) return [];
+    return records.filter(
+      (r) => r.locality === georefSpecimen.locality && (r.decimalLatitude === null || r.decimalLongitude === null)
+    );
+  }, [georefSpecimen, records]);
+
+  const handleGeorefSubmit = useCallback((newSuggestions: GeoreferenceSuggestion[]) => {
+    const ids = new Set(newSuggestions.map(s => s.gbifID));
+    const updated = [...suggestions.filter(s => !ids.has(s.gbifID)), ...newSuggestions];
     setSuggestions(updated);
     saveSuggestions(updated);
     setGeorefSpecimen(null);
