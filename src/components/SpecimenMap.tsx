@@ -5,8 +5,9 @@ import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import * as GeocoderModule from "leaflet-control-geocoder";
 import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
+import { loadFinestGADM, GADMResult } from "@/lib/gadm";
 import { Button } from "@/components/ui/button";
-import { Ruler, X, Crosshair } from "lucide-react";
+import { Ruler, X, Crosshair, Layers } from "lucide-react";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -64,6 +65,10 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   const measureLayerRef = useRef<L.LayerGroup | null>(null);
   const measureHandlerRef = useRef<((e: L.LeafletMouseEvent) => void) | null>(null);
   const [measureDistance, setMeasureDistance] = useState<string | null>(null);
+  const [showGADM, setShowGADM] = useState(false);
+  const [gadmData, setGadmData] = useState<GADMResult | null>(null);
+  const [gadmLoading, setGadmLoading] = useState(false);
+  const gadmLayerRef = useRef<L.GeoJSON | null>(null);
 
   const geojson = toGeoJSON(records);
 
