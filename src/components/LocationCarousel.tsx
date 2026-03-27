@@ -357,10 +357,10 @@ export default function LocationCarousel({
           </Button>
         </div>
         {/* Legend */}
-        <div className="flex items-center gap-2 justify-center text-[9px] text-muted-foreground mt-1">
-          <span className="flex items-center gap-0.5"><span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" /> OK</span>
-          {suggestions.length > 0 && <span className="flex items-center gap-0.5"><span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" /> Sug</span>}
-          {ungeorefCount > 0 && <span className="flex items-center gap-0.5"><span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" /> No ({ungeorefCount})</span>}
+        <div className="flex items-center gap-3 justify-center text-[9px] text-muted-foreground mt-1">
+          <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" /> Georeferenced</span>
+          {suggestions.length > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" /> Suggested</span>}
+          {ungeorefCount > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" /> Not georeferenced ({ungeorefCount})</span>}
         </div>
       </div>
     </div>
