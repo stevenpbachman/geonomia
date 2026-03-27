@@ -265,12 +265,9 @@ export default function LocationCarousel({
 
                   <span className="text-muted-foreground font-medium">Number</span>
                   <span className="font-mono font-semibold">{loc.specimens[0]?.recordNumber}</span>
-
-                  <span className="text-muted-foreground font-medium">Species</span>
-                  <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                 </div>
 
-                {/* Multiple specimen tabs - shown under Number as shaded pills */}
+                {/* Multiple specimen tabs below Number */}
                 {loc.specimens.length > 1 && (
                   <Tabs defaultValue="0" className="w-full mt-1">
                     <TabsList className="h-6 p-0.5 w-full">
@@ -281,14 +278,22 @@ export default function LocationCarousel({
                       ))}
                     </TabsList>
                     {loc.specimens.map((s, i) => (
-                      <TabsContent key={s.gbifID} value={String(i)} className="mt-1">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
-                          <span className="text-muted-foreground font-medium">Species</span>
+                      <TabsContent key={s.gbifID} value={String(i)} className="mt-0.5">
+                        <div className="text-[11px]">
+                          <span className="text-muted-foreground font-medium mr-2">Species</span>
                           <em className="truncate">{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                         </div>
                       </TabsContent>
                     ))}
                   </Tabs>
+                )}
+
+                {/* Species - only when single specimen */}
+                {loc.specimens.length === 1 && (
+                  <div className="text-[11px] mt-0.5 grid grid-cols-[auto_1fr] gap-x-2">
+                    <span className="text-muted-foreground font-medium">Species</span>
+                    <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
+                  </div>
                 )}
 
                 {/* Locality - fixed height, scrollable */}
