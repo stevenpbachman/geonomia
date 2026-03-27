@@ -10,8 +10,17 @@ interface Props {
   suggestions?: GeoreferenceSuggestion[];
 }
 
-export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest }: Props) {
+export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest, suggestions = [] }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Build a set of gbifIDs that have suggestions
+  const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
+  // Map gbifID -> suggestion for coords
+  const suggestionMap = useMemo(() => {
+    const m = new Map<string, GeoreferenceSuggestion>();
+    suggestions.forEach(s => m.set(s.gbifID, s));
+    return m;
+  }, [suggestions]);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -25,11 +34,24 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < summaries.length - 1;
   const isUngeoreferenced = loc.lat === null || loc.lon === null;
+  // Check if this ungeoref location has a suggestion
+  const hasSuggestion = isUngeoreferenced && loc.specimens.some(s => suggestedIds.has(s.gbifID));
 
   const goTo = (idx: number) => {
     setCurrentIndex(idx);
     const s = summaries[idx];
-    onLocationSelect?.(s?.lat !== null && s?.lon !== null ? s : null);
+    if (s?.lat !== null && s?.lon !== null) {
+      onLocationSelect?.(s);
+    } else {
+      // Check if there's a suggestion for any specimen at this location
+      const sugSpec = s?.specimens.find(sp => suggestionMap.has(sp.gbifID));
+      if (sugSpec) {
+        const sug = suggestionMap.get(sugSpec.gbifID)!;
+        onLocationSelect?.({ ...s, lat: sug.decimalLatitude, lon: sug.decimalLongitude });
+      } else {
+        onLocationSelect?.(null);
+      }
+    }
   };
 
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
