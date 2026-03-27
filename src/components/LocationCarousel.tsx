@@ -77,6 +77,7 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
             {/* Stop dots */}
             {summaries.map((s, i) => {
               const isUngeoref = s.lat === null || s.lon === null;
+              const isSuggested = isUngeoref && s.specimens.some(sp => suggestedIds.has(sp.gbifID));
               const isCurrent = i === currentIndex;
               const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
               return (
@@ -85,7 +86,7 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
                   onClick={() => goTo(i)}
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1"
                   style={{ left: `${pct}%` }}
-                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? " (no coords)" : ""}`}
+                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? (isSuggested ? " (suggested)" : " (no coords)") : ""}`}
                 >
                   <div
                     className={`rounded-full transition-all ${
@@ -93,7 +94,11 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
                         ? "w-3 h-3 ring-2 ring-primary ring-offset-1 ring-offset-background"
                         : "w-2 h-2"
                     } ${
-                      isUngeoref ? "bg-destructive" : "bg-primary"
+                      isUngeoref
+                        ? isSuggested
+                          ? "bg-blue-500"
+                          : "bg-destructive"
+                        : "bg-primary"
                     }`}
                   />
                 </button>
@@ -110,6 +115,12 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
             <span className="inline-block w-2 h-2 rounded-full bg-primary" />
             Georeferenced
           </span>
+          {suggestions.length > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+              Suggested
+            </span>
+          )}
           {ungeorefCount > 0 && (
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-full bg-destructive" />
