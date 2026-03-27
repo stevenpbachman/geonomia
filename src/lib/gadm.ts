@@ -68,13 +68,13 @@ async function fetchBoundaryLevel(iso3: string, level: number): Promise<GeoJSONF
   return adminLayerCache.get(cacheKey) ?? null;
 }
 
-/** Convert github.com/.../raw/... URLs to raw.githubusercontent.com for CORS compatibility */
+/** Convert github.com/.../raw/... URLs to media.githubusercontent.com for LFS + CORS */
 function githubRawToRawGH(url: string): string {
   // https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/...
-  // → https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/...
+  // → https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/...
   const match = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/raw\/(.+)$/);
   if (match) {
-    return `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}`;
+    return `https://media.githubusercontent.com/media/${match[1]}/${match[2]}/${match[3]}`;
   }
   return url;
 }
