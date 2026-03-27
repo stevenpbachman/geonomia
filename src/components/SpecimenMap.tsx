@@ -21,9 +21,9 @@ const Geocoder = (GeocoderModule as any).geocoders
 interface Props {
   records: SpecimenRecord[];
   highlightedLocation?: LocationSummary | null;
-  /** When true, next map click fires onGeorefClick instead of normal behavior */
   georefMode?: boolean;
   onGeorefClick?: (coords: { lat: number; lng: number }) => void;
+  suggestions?: GeoreferenceSuggestion[];
 }
 
 const TILE_LAYERS: Record<string, { url: string; attribution: string; name: string }> = {
