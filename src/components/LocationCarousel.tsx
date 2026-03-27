@@ -24,11 +24,13 @@ function InlineGeorefForm({
   mapClickCoords,
   onRequestMapClick,
   onSubmit,
+  disabled = false,
 }: {
   specimens: SpecimenRecord[];
   mapClickCoords?: { lat: number; lng: number } | null;
   onRequestMapClick?: () => void;
   onSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
+  disabled?: boolean;
 }) {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
@@ -80,36 +82,34 @@ function InlineGeorefForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-1.5 pt-2 border-t border-border mt-2">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
-        <Crosshair className="w-3 h-3" />
-        Georeference ({specimens.length} specimen{specimens.length > 1 ? "s" : ""})
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        <div className="space-y-0.5">
-          <label className="text-[10px] font-medium text-muted-foreground">Lat</label>
-          <Input type="number" step="any" placeholder="-23.55" value={lat} onChange={(e) => setLat(e.target.value)} className="h-6 text-[11px]" />
+      <fieldset disabled={disabled} className={disabled ? "opacity-50" : ""}>
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="space-y-0.5">
+            <label className="text-[10px] font-medium text-muted-foreground">Lat</label>
+            <Input type="number" step="any" placeholder="-23.55" value={lat} onChange={(e) => setLat(e.target.value)} className="h-6 text-[11px]" />
+          </div>
+          <div className="space-y-0.5">
+            <label className="text-[10px] font-medium text-muted-foreground">Lng</label>
+            <Input type="number" step="any" placeholder="-46.63" value={lng} onChange={(e) => setLng(e.target.value)} className="h-6 text-[11px]" />
+          </div>
         </div>
-        <div className="space-y-0.5">
-          <label className="text-[10px] font-medium text-muted-foreground">Lng</label>
-          <Input type="number" step="any" placeholder="-46.63" value={lng} onChange={(e) => setLng(e.target.value)} className="h-6 text-[11px]" />
+        <div className="flex gap-1.5 items-end mt-1.5">
+          <div className="space-y-0.5 flex-1">
+            <label className="text-[10px] font-medium text-muted-foreground">Uncertainty (m)</label>
+            <Input type="number" step="any" placeholder="1000" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-6 text-[11px]" />
+          </div>
+          <Button type="button" variant="outline" size="sm" className="h-6 gap-1 text-[10px] px-2" onClick={onRequestMapClick}>
+            <Crosshair className="w-3 h-3" /> Map
+          </Button>
         </div>
-      </div>
-      <div className="flex gap-1.5 items-end">
-        <div className="space-y-0.5 flex-1">
-          <label className="text-[10px] font-medium text-muted-foreground">Uncertainty (m)</label>
-          <Input type="number" step="any" placeholder="1000" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-6 text-[11px]" />
+        <div className="space-y-0.5 mt-1.5">
+          <label className="text-[10px] font-medium text-muted-foreground">Remarks</label>
+          <Textarea placeholder="Notes..." value={remarks} onChange={(e) => setRemarks(e.target.value)} className="text-[11px] min-h-[28px]" />
         </div>
-        <Button type="button" variant="outline" size="sm" className="h-6 gap-1 text-[10px] px-2" onClick={onRequestMapClick}>
-          <Crosshair className="w-3 h-3" /> Map
+        <Button type="submit" size="sm" className="w-full gap-1.5 h-6 text-[11px] mt-1.5">
+          <Save className="w-3 h-3" /> Save
         </Button>
-      </div>
-      <div className="space-y-0.5">
-        <label className="text-[10px] font-medium text-muted-foreground">Remarks</label>
-        <Textarea placeholder="Notes..." value={remarks} onChange={(e) => setRemarks(e.target.value)} className="text-[11px] min-h-[28px]" />
-      </div>
-      <Button type="submit" size="sm" className="w-full gap-1.5 h-6 text-[11px]">
-        <Save className="w-3 h-3" /> Save
-      </Button>
+      </fieldset>
     </form>
   );
 }
@@ -152,7 +152,7 @@ export default function LocationCarousel({
   mapSlot,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [editMode, setEditMode] = useState(false);
 
   const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
@@ -212,8 +212,35 @@ export default function LocationCarousel({
           <div className="w-[300px] h-full">
             <ScrollArea className="h-full max-h-[500px]">
               <div className={`rounded-lg border px-2.5 py-2 space-y-1.5 text-xs ${
+                editMode ? "ring-2 ring-primary/40" : ""
+              } ${
                 needsGeoref ? "bg-destructive/5 border-destructive/20" : hasSuggestion ? "bg-blue-500/5 border-blue-500/30" : "bg-card border-border"
               }`}>
+                {/* Panel controls */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant={editMode ? "default" : "outline"}
+                      size="sm"
+                      className="h-5 gap-1 text-[10px] px-1.5"
+                      onClick={() => setEditMode(!editMode)}
+                      title={editMode ? "Exit edit mode" : "Enter edit mode"}
+                    >
+                      <Pencil className="w-2.5 h-2.5" />
+                      {editMode ? "Editing" : "Edit"}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setPanelOpen(false)}
+                    title="Close panel"
+                  >
+                    <PanelLeftClose className="w-3 h-3" />
+                  </Button>
+                </div>
+
                 {/* Date + locality */}
                 <div className="flex items-start gap-1.5">
                   <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-bold ${
@@ -257,13 +284,14 @@ export default function LocationCarousel({
                   </Tabs>
                 )}
 
-                {/* Georef form - only in edit mode */}
-                {editMode && ungeorefSpecimens.length > 0 && (
+                {/* Georef form - always shown for ungeoreferenced specimens */}
+                {ungeorefSpecimens.length > 0 && (
                   <InlineGeorefForm
                     specimens={ungeorefSpecimens}
                     mapClickCoords={mapClickCoords}
                     onRequestMapClick={onRequestMapClick}
                     onSubmit={onGeorefSubmit}
+                    disabled={!editMode}
                   />
                 )}
               </div>
@@ -271,33 +299,22 @@ export default function LocationCarousel({
           </div>
         </div>
 
-        {/* Map + toggle buttons overlay */}
+        {/* Map + panel reopen button */}
         <div className="flex-1 min-w-0 relative">
           {mapSlot}
-          {/* Panel toggle + Edit mode buttons */}
-          <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-7 w-7 shadow-md"
-              onClick={() => setPanelOpen(!panelOpen)}
-              title={panelOpen ? "Close panel" : "Open panel"}
-            >
-              {panelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
-            </Button>
-            <Button
-              variant={editMode ? "default" : "secondary"}
-              size="icon"
-              className="h-7 w-7 shadow-md"
-              onClick={() => {
-                setEditMode(!editMode);
-                if (!editMode) setPanelOpen(true);
-              }}
-              title={editMode ? "Exit edit mode" : "Enter edit mode"}
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+          {!panelOpen && (
+            <div className="absolute top-2 left-2 z-[1000]">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-7 w-7 shadow-md"
+                onClick={() => setPanelOpen(true)}
+                title="Open panel"
+              >
+                <PanelLeftOpen className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
