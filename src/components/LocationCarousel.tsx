@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { LocationSummary, GeoreferenceSuggestion, SpecimenRecord } from "@/lib/types";
 import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair, Save, PanelLeftOpen, PanelLeftClose, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -164,6 +164,8 @@ export default function LocationCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [panelOpen, setPanelOpen] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
   const suggestionMap = useMemo(() => {
@@ -179,6 +181,19 @@ export default function LocationCarousel({
   }, [summaries, onLocationSelect]);
 
   const loc = summaries[currentIndex];
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || typeof ResizeObserver === "undefined") return;
+
+    const updateHeight = () => setPanelHeight(panel.getBoundingClientRect().height);
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [currentIndex, panelOpen, editMode, loc?.locality, mapClickCoords, summaries.length]);
+
   if (!loc) return null;
 
   const canPrev = currentIndex > 0;
@@ -219,7 +234,7 @@ export default function LocationCarousel({
             panelOpen ? "w-[300px] mr-3" : "w-0"
           }`}
         >
-          <div className="w-[300px] flex flex-col overflow-hidden">
+          <div ref={panelRef} className="w-[300px] flex flex-col overflow-hidden">
             <ScrollArea className="flex-1">
               <div className={`rounded-lg border px-2.5 py-2 text-xs h-full flex flex-col ${
                 editMode ? "ring-2 ring-primary/40" : ""
@@ -311,7 +326,7 @@ export default function LocationCarousel({
         </div>
 
         {/* Map + panel reopen button */}
-        <div className="relative flex-1 min-w-0 h-full">
+        <div className="relative flex-1 min-w-0" style={panelHeight ? { height: panelHeight } : undefined}>
           {mapSlot}
           {!panelOpen && (
             <div className="absolute top-2 left-2 z-[1000]">
