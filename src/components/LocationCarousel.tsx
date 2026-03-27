@@ -32,10 +32,24 @@ function InlineGeorefForm({
   onSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
   disabled?: boolean;
 }) {
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
+  // Pre-fill from specimen coordinates
+  const firstWithCoords = specimens.find(s => s.decimalLatitude !== null && s.decimalLongitude !== null);
+  const defaultLat = firstWithCoords?.decimalLatitude?.toFixed(6) ?? "";
+  const defaultLng = firstWithCoords?.decimalLongitude?.toFixed(6) ?? "";
+
+  const [lat, setLat] = useState(defaultLat);
+  const [lng, setLng] = useState(defaultLng);
   const [uncertainty, setUncertainty] = useState("");
   const [remarks, setRemarks] = useState("");
+
+  // Reset when specimens change
+  useEffect(() => {
+    const s = specimens.find(sp => sp.decimalLatitude !== null && sp.decimalLongitude !== null);
+    setLat(s?.decimalLatitude?.toFixed(6) ?? "");
+    setLng(s?.decimalLongitude?.toFixed(6) ?? "");
+    setUncertainty("");
+    setRemarks("");
+  }, [specimens]);
 
   useEffect(() => {
     if (mapClickCoords) {
