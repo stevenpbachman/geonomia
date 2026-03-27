@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LocationSummary } from "@/lib/types";
-import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle } from "lucide-react";
+import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -30,7 +30,6 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
     onLocationSelect?.(s?.lat !== null && s?.lon !== null ? s : null);
   };
 
-  // Count stats for the legend
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
 
   return (
@@ -41,44 +40,41 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
           <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
             {summaries[0]?.date}
           </span>
-          <div className="flex-1 relative">
-            <input
-              type="range"
-              min={0}
-              max={summaries.length - 1}
-              value={currentIndex}
-              onChange={(e) => goTo(Number(e.target.value))}
-              className="w-full h-2 accent-primary cursor-pointer relative z-10"
-              style={{ opacity: 0.8 }}
-            />
-            {/* Stop indicators overlay */}
-            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 flex justify-between pointer-events-none px-[6px]" style={{ height: 12 }}>
-              {summaries.map((s, i) => {
-                const isUngeoref = s.lat === null || s.lon === null;
-                const isCurrent = i === currentIndex;
-                return (
-                  <button
-                    key={i}
-                    onClick={(e) => { e.stopPropagation(); goTo(i); }}
-                    className="pointer-events-auto relative"
-                    style={{ width: 0 }}
-                    title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? " (no coords)" : ""}`}
-                  >
-                    <div
-                      className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all ${
-                        isCurrent
-                          ? "w-3.5 h-3.5 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                          : "w-2 h-2"
-                      } ${
-                        isUngeoref
-                          ? "bg-destructive"
-                          : "bg-primary"
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
+          <div className="flex-1 relative h-6">
+            {/* Track line */}
+            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-border rounded-full" />
+            {/* Progress line up to current */}
+            {summaries.length > 1 && (
+              <div
+                className="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-muted-foreground/30 rounded-full"
+                style={{ width: `${(currentIndex / (summaries.length - 1)) * 100}%` }}
+              />
+            )}
+            {/* Stop dots */}
+            {summaries.map((s, i) => {
+              const isUngeoref = s.lat === null || s.lon === null;
+              const isCurrent = i === currentIndex;
+              const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
+              return (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1"
+                  style={{ left: `${pct}%` }}
+                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? " (no coords)" : ""}`}
+                >
+                  <div
+                    className={`rounded-full transition-all ${
+                      isCurrent
+                        ? "w-3 h-3 ring-2 ring-primary ring-offset-1 ring-offset-background"
+                        : "w-2 h-2"
+                    } ${
+                      isUngeoref ? "bg-destructive" : "bg-primary"
+                    }`}
+                  />
+                </button>
+              );
+            })}
           </div>
           <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
             {summaries[summaries.length - 1]?.date}
@@ -99,13 +95,13 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
         </div>
       </div>
 
-      <div className="flex items-stretch gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
           disabled={!canPrev}
           onClick={() => goTo(currentIndex - 1)}
-          className="flex-shrink-0 self-center"
+          className="flex-shrink-0"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -156,6 +152,15 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
                       <span className="text-border">·</span>
                       <Hash className="w-3 h-3 flex-shrink-0" />
                       <span className="font-mono font-semibold">{s.recordNumber}</span>
+                      <a
+                        href={`https://www.gbif.org/occurrence/${s.gbifID}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto flex-shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                        title="View specimen on GBIF (includes images)"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Leaf className="w-3 h-3 text-primary flex-shrink-0" />
@@ -175,7 +180,7 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
           size="icon"
           disabled={!canNext}
           onClick={() => goTo(currentIndex + 1)}
-          className="flex-shrink-0 self-center"
+          className="flex-shrink-0"
         >
           <ChevronRight className="w-5 h-5" />
         </Button>
