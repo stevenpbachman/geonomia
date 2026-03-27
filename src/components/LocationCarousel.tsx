@@ -1,12 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { LocationSummary, GeoreferenceSuggestion, SpecimenRecord } from "@/lib/types";
-import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair, Save } from "lucide-react";
+import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair, Save, PanelLeftOpen, PanelLeftClose, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 
 interface Props {
@@ -154,6 +153,7 @@ export default function LocationCarousel({
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
   const suggestionMap = useMemo(() => {
@@ -201,24 +201,16 @@ export default function LocationCarousel({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      {/* Top row: collapsible panel + map side by side */}
-      <div className="flex gap-3 w-full items-start">
-        {/* Collapsible side panel */}
-        <Collapsible open={panelOpen} onOpenChange={setPanelOpen} className="flex-shrink-0">
-          <CollapsibleTrigger asChild>
-            <Button
-              variant={needsGeoref ? "destructive" : hasSuggestion ? "outline" : "outline"}
-              size="sm"
-              className="gap-1.5 text-xs whitespace-nowrap w-full justify-start"
-            >
-              {panelOpen ? "▾" : "▸"}
-              <span className="font-mono">{currentIndex + 1}/{summaries.length}</span>
-              <span className="truncate max-w-[140px]">{loc.locality}</span>
-              {needsGeoref && <AlertTriangle className="w-3 h-3" />}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="w-[300px] mt-1">
-            <ScrollArea className="max-h-[400px]">
+      {/* Top row: sliding panel + map side by side */}
+      <div className="flex w-full items-stretch">
+        {/* Side panel - slides left-to-right */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 ${
+            panelOpen ? "w-[300px] mr-3" : "w-0"
+          }`}
+        >
+          <div className="w-[300px] h-full">
+            <ScrollArea className="h-full max-h-[500px]">
               <div className={`rounded-lg border px-2.5 py-2 space-y-1.5 text-xs ${
                 needsGeoref ? "bg-destructive/5 border-destructive/20" : hasSuggestion ? "bg-blue-500/5 border-blue-500/30" : "bg-card border-border"
               }`}>
@@ -265,8 +257,8 @@ export default function LocationCarousel({
                   </Tabs>
                 )}
 
-                {/* Inline georef form */}
-                {needsGeoref && ungeorefSpecimens.length > 0 && (
+                {/* Georef form - only in edit mode */}
+                {editMode && ungeorefSpecimens.length > 0 && (
                   <InlineGeorefForm
                     specimens={ungeorefSpecimens}
                     mapClickCoords={mapClickCoords}
@@ -276,16 +268,40 @@ export default function LocationCarousel({
                 )}
               </div>
             </ScrollArea>
-          </CollapsibleContent>
-        </Collapsible>
+          </div>
+        </div>
 
-        {/* Map slot */}
-        <div className="flex-1 min-w-0">
+        {/* Map + toggle buttons overlay */}
+        <div className="flex-1 min-w-0 relative">
           {mapSlot}
+          {/* Panel toggle + Edit mode buttons */}
+          <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-7 w-7 shadow-md"
+              onClick={() => setPanelOpen(!panelOpen)}
+              title={panelOpen ? "Close panel" : "Open panel"}
+            >
+              {panelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
+            </Button>
+            <Button
+              variant={editMode ? "default" : "secondary"}
+              size="icon"
+              className="h-7 w-7 shadow-md"
+              onClick={() => {
+                setEditMode(!editMode);
+                if (!editMode) setPanelOpen(true);
+              }}
+              title={editMode ? "Exit edit mode" : "Enter edit mode"}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Horizontal scrubber below the map */}
+      {/* Horizontal scrubber below */}
       <div className="px-1">
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" disabled={!canPrev} onClick={() => goTo(currentIndex - 1)} className="h-6 w-6 flex-shrink-0">
