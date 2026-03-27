@@ -3,7 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import * as GeocoderModule from "leaflet-control-geocoder";
-import { SpecimenRecord, LocationSummary } from "@/lib/types";
+import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
 import { loadFinestGADM, GADMResult } from "@/lib/gadm";
 import { Button } from "@/components/ui/button";

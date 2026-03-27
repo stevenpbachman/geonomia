@@ -195,6 +195,7 @@ export default function Index() {
                     highlightedLocation={highlightedLocation}
                     georefMode={georefMode}
                     onGeorefClick={handleMapGeorefClick}
+                    suggestions={suggestions}
                   />
                 </div>
               </div>
