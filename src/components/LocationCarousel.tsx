@@ -284,16 +284,14 @@ export default function LocationCarousel({
                   </Tabs>
                 )}
 
-                {/* Georef form - always shown for ungeoreferenced specimens */}
-                {ungeorefSpecimens.length > 0 && (
-                  <InlineGeorefForm
-                    specimens={ungeorefSpecimens}
-                    mapClickCoords={mapClickCoords}
-                    onRequestMapClick={onRequestMapClick}
-                    onSubmit={onGeorefSubmit}
-                    disabled={!editMode}
-                  />
-                )}
+                {/* Georef form - always shown */}
+                <InlineGeorefForm
+                  specimens={loc.specimens}
+                  mapClickCoords={mapClickCoords}
+                  onRequestMapClick={onRequestMapClick}
+                  onSubmit={onGeorefSubmit}
+                  disabled={!editMode}
+                />
               </div>
             </ScrollArea>
           </div>
