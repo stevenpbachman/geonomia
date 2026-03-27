@@ -212,15 +212,15 @@ export default function LocationCarousel({
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* Top row: sliding panel + map side by side */}
-      <div className="flex h-[500px] w-full items-stretch">
+      <div className="flex w-full items-stretch">
         {/* Side panel - slides left-to-right */}
         <div
           className={`overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 ${
             panelOpen ? "w-[300px] mr-3" : "w-0"
           }`}
         >
-          <div className="w-[300px] h-full flex flex-col overflow-hidden">
-            <ScrollArea className="flex-1 h-0">
+          <div className="w-[300px] flex flex-col overflow-hidden">
+            <ScrollArea className="flex-1">
               <div className={`rounded-lg border px-2.5 py-2 text-xs h-full flex flex-col ${
                 editMode ? "ring-2 ring-primary/40" : ""
               } ${
