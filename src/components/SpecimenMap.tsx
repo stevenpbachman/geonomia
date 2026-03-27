@@ -380,6 +380,21 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
             {val.name}
           </button>
         ))}
+        {/* GADM admin boundaries toggle */}
+        <div className="mt-1 border-t border-border pt-1">
+          <button
+            onClick={() => setShowGADM(!showGADM)}
+            disabled={gadmLoading || !gadmData}
+            className={`px-2 py-1 text-xs rounded shadow-sm border transition-colors w-full flex items-center gap-1 ${
+              showGADM
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-card-foreground border-border hover:bg-accent"
+            } ${gadmLoading || !gadmData ? "opacity-50 cursor-wait" : ""}`}
+          >
+            <Layers className="w-3 h-3" />
+            {gadmLoading ? "Loading…" : gadmData ? `GADM L${gadmData.level}` : "No GADM"}
+          </button>
+        </div>
       </div>
 
       {/* Measure tool */}
