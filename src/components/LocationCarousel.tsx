@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { LocationSummary } from "@/lib/types";
-import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, ImageIcon } from "lucide-react";
+import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   summaries: LocationSummary[];
   onLocationSelect?: (summary: LocationSummary | null) => void;
+  onGeoreferenceRequest?: (specimen: import("@/lib/types").SpecimenRecord) => void;
 }
 
-export default function LocationCarousel({ summaries, onLocationSelect }: Props) {
+export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -154,25 +155,25 @@ export default function LocationCarousel({ summaries, onLocationSelect }: Props)
                       <span className="font-mono font-semibold">{s.recordNumber}</span>
                       <div className="ml-auto flex items-center gap-1.5">
                         <a
-                          href={`https://www.gbif.org/tools/zoom/simple.html?src=//api.gbif.org/v1/image/cache/occurrence/${s.gbifID}/media/0`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-medium text-foreground hover:bg-accent transition-colors"
-                          title="Open specimen image in a new window"
-                        >
-                          <ImageIcon className="w-3 h-3" />
-                          Image
-                        </a>
-                        <a
                           href={`https://www.gbif.org/occurrence/${s.gbifID}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+                          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-medium text-foreground hover:bg-accent transition-colors"
                           title="View specimen on GBIF"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-3 h-3" />
                           GBIF
                         </a>
+                        {(s.decimalLatitude === null || s.decimalLongitude === null) && onGeoreferenceRequest && (
+                          <button
+                            onClick={() => onGeoreferenceRequest(s)}
+                            className="inline-flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Suggest coordinates for this specimen"
+                          >
+                            <Crosshair className="w-3 h-3" />
+                            Georeference
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
