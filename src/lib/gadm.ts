@@ -1,9 +1,9 @@
 /**
- * Fetch GADM administrative boundaries for the area covering the given points.
- * Tries from the finest level down to level 1, returning the first that succeeds.
+ * Fetch administrative boundaries via geoBoundaries API.
+ * Tries from the finest level down to ADM1, returning the first that succeeds.
  */
 
-const GADM_BASE = "https://geodata.ucdavis.edu/gadm/gadm4.1/json";
+const GEO_BOUNDARIES_API = "https://www.geoboundaries.org/api/current/gbOpen";
 
 /** Reverse-geocode a point to get ISO-3166-1 alpha-3 country code */
 async function getCountryISO3(lat: number, lng: number): Promise<string | null> {
@@ -16,33 +16,30 @@ async function getCountryISO3(lat: number, lng: number): Promise<string | null> 
     const data = await res.json();
     const cc2 = data.address?.country_code?.toUpperCase();
     if (!cc2) return null;
-    // Convert ISO2 → ISO3 using a lookup
     return iso2to3(cc2);
   } catch {
     return null;
   }
 }
 
-/** Try to fetch GADM GeoJSON at a given level for a country via CORS proxy */
-async function fetchGADMLevel(iso3: string, level: number): Promise<any | null> {
-  const directUrl = `${GADM_BASE}/gadm41_${iso3}_${level}.json`;
-  // Try multiple CORS proxies as fallbacks
-  const urls = [
-    `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
-    directUrl, // try direct as last resort
-  ];
-  for (const url of urls) {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data?.features) return data;
-    } catch {
-      continue;
-    }
+/** Fetch geoBoundaries GeoJSON at a given admin level for a country */
+async function fetchBoundaryLevel(iso3: string, level: number): Promise<any | null> {
+  try {
+    // Step 1: get metadata including the simplified GeoJSON URL
+    const metaRes = await fetch(`${GEO_BOUNDARIES_API}/${iso3}/ADM${level}/`);
+    if (!metaRes.ok) return null;
+    const meta = await metaRes.json();
+
+    const gjUrl = meta.simplifiedGeometryGeoJSON || meta.gjDownloadURL;
+    if (!gjUrl) return null;
+
+    // Step 2: fetch the actual GeoJSON
+    const gjRes = await fetch(gjUrl);
+    if (!gjRes.ok) return null;
+    return await gjRes.json();
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export interface GADMResult {
@@ -52,25 +49,23 @@ export interface GADMResult {
 }
 
 /**
- * Load the finest GADM level available for the country containing the given points.
- * maxLevel caps how deep we try (GADM goes up to ~5 for some countries).
+ * Load the finest admin boundary level available for the country containing the given points.
+ * maxLevel caps how deep we try (geoBoundaries typically has ADM0-ADM2, sometimes ADM3+).
  */
 export async function loadFinestGADM(
   points: [number, number][], // [lat, lng]
-  maxLevel = 4
+  maxLevel = 3
 ): Promise<GADMResult | null> {
   if (points.length === 0) return null;
 
-  // Use centroid of points for country lookup
   const avgLat = points.reduce((s, p) => s + p[0], 0) / points.length;
   const avgLng = points.reduce((s, p) => s + p[1], 0) / points.length;
 
   const iso3 = await getCountryISO3(avgLat, avgLng);
   if (!iso3) return null;
 
-  // Try from finest level down
   for (let level = maxLevel; level >= 1; level--) {
-    const geojson = await fetchGADMLevel(iso3, level);
+    const geojson = await fetchBoundaryLevel(iso3, level);
     if (geojson && geojson.features?.length > 0) {
       return { geojson, level, country: iso3 };
     }
