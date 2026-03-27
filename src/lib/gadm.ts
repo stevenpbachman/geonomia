@@ -23,16 +23,26 @@ async function getCountryISO3(lat: number, lng: number): Promise<string | null> 
   }
 }
 
-/** Try to fetch GADM GeoJSON at a given level for a country */
+/** Try to fetch GADM GeoJSON at a given level for a country via CORS proxy */
 async function fetchGADMLevel(iso3: string, level: number): Promise<any | null> {
-  try {
-    const url = `${GADM_BASE}/gadm41_${iso3}_${level}.json`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+  const directUrl = `${GADM_BASE}/gadm41_${iso3}_${level}.json`;
+  // Try multiple CORS proxies as fallbacks
+  const urls = [
+    `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
+    directUrl, // try direct as last resort
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.features) return data;
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 export interface GADMResult {
