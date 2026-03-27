@@ -42,11 +42,6 @@ const TILE_LAYERS: Record<string, { url: string; attribution: string; name: stri
     url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: '&copy; OpenTopoMap contributors',
   },
-  terrain: {
-    name: "Terrain",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg",
-    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a>',
-  },
 };
 
 function formatDistance(meters: number): string {
@@ -69,8 +64,12 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   const [gadmData, setGadmData] = useState<GADMResult | null>(null);
   const [gadmLoading, setGadmLoading] = useState(false);
   const gadmLayerRef = useRef<L.GeoJSON | null>(null);
+  const [showHull, setShowHull] = useState(true);
+  const hullLayerRef = useRef<L.GeoJSON | null>(null);
 
   const geojson = toGeoJSON(records);
+  const pointFeatures = geojson.features.filter((feature) => feature.geometry.type === "Point");
+  const hullFeatures = geojson.features.filter((feature) => feature.geometry.type === "Polygon");
 
   // Initialize map
   useEffect(() => {
@@ -124,8 +123,8 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     // Scale control
     L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-    // Specimen data
-    L.geoJSON(geojson as any, {
+    // Specimen points
+    L.geoJSON({ type: "FeatureCollection", features: pointFeatures } as any, {
       pointToLayer: (_feature, latlng) =>
         L.circleMarker(latlng, {
           radius: 7,
@@ -135,18 +134,6 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
           opacity: 1,
           fillOpacity: 0.85,
         }),
-      style: (feature) => {
-        if (feature?.geometry.type === "Polygon") {
-          return {
-            color: "hsl(28, 60%, 55%)",
-            weight: 2,
-            fillColor: "hsl(28, 60%, 55%)",
-            fillOpacity: 0.1,
-            dashArray: "6 4",
-          };
-        }
-        return {};
-      },
       onEachFeature: (feature, layer) => {
         if (feature.geometry.type === "Point") {
           const p = feature.properties;
@@ -161,9 +148,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       },
     }).addTo(map);
 
-    const points = geojson.features
-      .filter((f) => f.geometry.type === "Point")
-      .map((f) => f.geometry.coordinates as [number, number]);
+    const points = pointFeatures.map((f) => f.geometry.coordinates as [number, number]);
 
     if (points.length > 0) {
       const bounds = L.latLngBounds(
@@ -191,6 +176,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       map.remove();
       mapRef.current = null;
       measureLayerRef.current = null;
+      hullLayerRef.current = null;
     };
   }, [records]);
 
@@ -234,6 +220,29 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     const map = mapRef.current;
     if (!map) return;
 
+    if (hullLayerRef.current) {
+      hullLayerRef.current.remove();
+      hullLayerRef.current = null;
+    }
+
+    if (showHull && hullFeatures.length > 0) {
+      const layer = L.geoJSON({ type: "FeatureCollection", features: hullFeatures } as any, {
+        style: () => ({
+          color: "hsl(28, 60%, 55%)",
+          weight: 2,
+          fillColor: "hsl(28, 60%, 55%)",
+          fillOpacity: 0.1,
+          dashArray: "6 4",
+        }),
+      }).addTo(map);
+      hullLayerRef.current = layer;
+    }
+  }, [showHull, hullFeatures]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
     if (gadmLayerRef.current) {
       gadmLayerRef.current.remove();
       gadmLayerRef.current = null;
@@ -266,11 +275,10 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   // Switch tile layer
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !tileLayerRef.current) return;
+    if (!map) return;
     const layer = TILE_LAYERS[activeLayer];
-    tileLayerRef.current.setUrl(layer.url);
-    tileLayerRef.current.options.attribution = layer.attribution;
-    map.attributionControl.removeAttribution("");
+    tileLayerRef.current?.remove();
+    tileLayerRef.current = L.tileLayer(layer.url, { attribution: layer.attribution }).addTo(map);
   }, [activeLayer]);
 
   // Highlight selected location
@@ -408,6 +416,18 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
         {/* GADM admin boundaries toggle */}
         <div className="mt-1 border-t border-border pt-1">
           <button
+            onClick={() => setShowHull(!showHull)}
+            disabled={hullFeatures.length === 0}
+            className={`mb-1 px-2 py-1 text-xs rounded shadow-sm border transition-colors w-full flex items-center gap-1 ${
+              showHull
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-card-foreground border-border hover:bg-accent"
+            } ${hullFeatures.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <Layers className="w-3 h-3" />
+            {hullFeatures.length > 0 ? "Convex hull" : "No hull"}
+          </button>
+          <button
             onClick={() => setShowGADM(!showGADM)}
             disabled={gadmLoading || !gadmData}
             className={`px-2 py-1 text-xs rounded shadow-sm border transition-colors w-full flex items-center gap-1 ${
@@ -460,7 +480,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       <div
         ref={containerRef}
         className="rounded-lg overflow-hidden border shadow-sm"
-        style={{ height: 440 }}
+        style={{ height: 400 }}
       />
     </div>
   );
