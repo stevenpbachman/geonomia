@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
@@ -9,10 +9,9 @@ import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
 import CollectingTeams from "@/components/CollectingTeams";
 import GeoJSONExport from "@/components/GeoJSONExport";
-import GeoreferenceForm from "@/components/GeoreferenceForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Leaf, Database, Search, Upload, Download, X } from "lucide-react";
+import { Leaf, Database, Search, Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 
 const STORAGE_KEY = "georef-suggestions";
@@ -36,7 +35,6 @@ export default function Index() {
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
 
   // Georeferencing state
-  const [georefSpecimen, setGeorefSpecimen] = useState<SpecimenRecord | null>(null);
   const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [georefMode, setGeorefMode] = useState(false);
   const [suggestions, setSuggestions] = useState<GeoreferenceSuggestion[]>(loadSuggestions);
@@ -48,35 +46,14 @@ export default function Index() {
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
 
-  const handleGeorefRequest = useCallback((specimen: SpecimenRecord) => {
-    setGeorefSpecimen(specimen);
-    setMapClickCoords(null);
-    setGeorefMode(false);
-  }, []);
-
-  // Find all specimens at the same locality as the georef target
-  const georefLocalitySpecimens = useMemo(() => {
-    if (!georefSpecimen || !records) return [];
-    return records.filter(
-      (r) => r.locality === georefSpecimen.locality && (r.decimalLatitude === null || r.decimalLongitude === null)
-    );
-  }, [georefSpecimen, records]);
-
   const handleGeorefSubmit = useCallback((newSuggestions: GeoreferenceSuggestion[]) => {
     const ids = new Set(newSuggestions.map(s => s.gbifID));
     const updated = [...suggestions.filter(s => !ids.has(s.gbifID)), ...newSuggestions];
     setSuggestions(updated);
     saveSuggestions(updated);
-    setGeorefSpecimen(null);
     setGeorefMode(false);
     setMapClickCoords(null);
   }, [suggestions]);
-
-  const handleGeorefCancel = useCallback(() => {
-    setGeorefSpecimen(null);
-    setGeorefMode(false);
-    setMapClickCoords(null);
-  }, []);
 
   const handleRequestMapClick = useCallback(() => {
     setGeorefMode(true);
@@ -127,12 +104,7 @@ export default function Index() {
               </Button>
             )}
             {records && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowInput(!showInput)}
-                className="gap-2"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowInput(!showInput)} className="gap-2">
                 <Database className="w-3.5 h-3.5" />
                 {showInput ? "Hide input" : "New data"}
               </Button>
@@ -183,32 +155,13 @@ export default function Index() {
 
             <section className="scroll-reveal space-y-2">
               <h2 className="text-lg font-semibold">Collection Map</h2>
-              <p className="text-sm text-muted-foreground">
-                Green markers = georeferenced specimens · Dashed orange polygon = MCP · Yellow highlight = selected stop
-              </p>
-              <div className="flex gap-4">
-                {georefSpecimen && (
-                  <div className="flex-shrink-0 animate-in slide-in-from-left duration-300" style={{ width: 300 }}>
-                    <GeoreferenceForm
-                      specimen={georefSpecimen}
-                      localitySpecimens={georefLocalitySpecimens}
-                      mapClickCoords={mapClickCoords}
-                      onSubmit={handleGeorefSubmit}
-                      onCancel={handleGeorefCancel}
-                      onRequestMapClick={handleRequestMapClick}
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <SpecimenMap
-                    records={records}
-                    highlightedLocation={highlightedLocation}
-                    georefMode={georefMode}
-                    onGeorefClick={handleMapGeorefClick}
-                    suggestions={suggestions}
-                  />
-                </div>
-              </div>
+              <SpecimenMap
+                records={records}
+                highlightedLocation={highlightedLocation}
+                georefMode={georefMode}
+                onGeorefClick={handleMapGeorefClick}
+                suggestions={suggestions}
+              />
             </section>
 
             <section className="scroll-reveal space-y-2">
@@ -221,8 +174,11 @@ export default function Index() {
               <LocationCarousel
                 summaries={locationSummaries}
                 onLocationSelect={setHighlightedLocation}
-                onGeoreferenceRequest={handleGeorefRequest}
                 suggestions={suggestions}
+                mapClickCoords={mapClickCoords}
+                georefMode={georefMode}
+                onRequestMapClick={handleRequestMapClick}
+                onGeorefSubmit={handleGeorefSubmit}
               />
             </section>
 
