@@ -221,58 +221,74 @@ export default function LocationCarousel({
         >
           <div className="w-[300px] h-full flex flex-col overflow-hidden">
             <ScrollArea className="flex-1 h-0">
-              <div className={`rounded-lg border px-2.5 py-2 space-y-1.5 text-xs ${
+              <div className={`rounded-lg border px-2.5 py-2 text-xs h-full flex flex-col ${
                 editMode ? "ring-2 ring-primary/40" : ""
               } ${
                 needsGeoref ? "bg-destructive/5 border-destructive/20" : hasSuggestion ? "bg-blue-500/5 border-blue-500/30" : "bg-card border-border"
               }`}>
                 {/* Panel controls */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1">
+                    <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-bold ${
+                      needsGeoref ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                    }`}>
+                      {currentIndex + 1}
+                    </div>
                     <Button
                       variant={editMode ? "default" : "outline"}
                       size="sm"
                       className="h-5 gap-1 text-[10px] px-1.5"
                       onClick={() => setEditMode(!editMode)}
-                      title={editMode ? "Exit edit mode" : "Enter edit mode"}
                     >
                       <Pencil className="w-2.5 h-2.5" />
                       {editMode ? "Editing" : "Edit"}
                     </Button>
+                    {needsGeoref && <AlertTriangle className="w-3 h-3 text-destructive flex-shrink-0" />}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setPanelOpen(false)}
-                    title="Close panel"
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setPanelOpen(false)}>
                     <PanelLeftClose className="w-3 h-3" />
                   </Button>
                 </div>
 
-                {/* Date + locality */}
-                <div className="flex items-start gap-1.5">
-                  <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-bold ${
-                    needsGeoref ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-                  }`}>
-                    {currentIndex + 1}
+                {/* Fixed fields table */}
+                <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
+                  <span className="text-muted-foreground font-medium">Date</span>
+                  <span className="font-mono">{loc.date}</span>
+
+                  <span className="text-muted-foreground font-medium">Collector</span>
+                  <span className="truncate">{loc.specimens[0]?.recordedBy}</span>
+
+                  <span className="text-muted-foreground font-medium">Number</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono font-semibold">{loc.specimens[0]?.recordNumber}</span>
+                    {loc.specimens.length > 1 && (
+                      <span className="text-muted-foreground">+{loc.specimens.length - 1} more</span>
+                    )}
+                    <a
+                      href={`https://www.gbif.org/occurrence/${loc.specimens[0]?.gbifID}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto inline-flex items-center gap-0.5 rounded border border-border px-1 text-[9px] font-medium hover:bg-accent transition-colors flex-shrink-0"
+                    >
+                      <ExternalLink className="w-2 h-2" /> GBIF
+                    </a>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="font-mono">{loc.date}</span>
-                      {needsGeoref && <AlertTriangle className="w-3 h-3 text-destructive ml-auto flex-shrink-0" />}
-                    </div>
-                    <span className="text-[11px] font-medium leading-tight line-clamp-2">{loc.locality}</span>
+
+                  <span className="text-muted-foreground font-medium">Species</span>
+                  <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
+                </div>
+
+                {/* Locality - fixed height, scrollable */}
+                <div className="mt-1.5 space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-medium">Locality</span>
+                  <div className="h-[32px] overflow-y-auto text-[11px] leading-tight border rounded px-1.5 py-1 bg-background">
+                    {loc.locality}
                   </div>
                 </div>
 
-                {/* Specimens */}
-                {loc.specimens.length === 1 ? (
-                  <SpecimenInfo specimen={loc.specimens[0]} suggestedIds={suggestedIds} />
-                ) : (
-                  <Tabs defaultValue="0" className="w-full">
+                {/* Specimen tabs if multiple */}
+                {loc.specimens.length > 1 && (
+                  <Tabs defaultValue="0" className="w-full mt-1.5">
                     <TabsList className="h-6 p-0.5 w-full">
                       {loc.specimens.map((s, i) => (
                         <TabsTrigger key={s.gbifID} value={String(i)} className="text-[10px] px-1.5 py-0 h-5 flex-1">
@@ -282,20 +298,27 @@ export default function LocationCarousel({
                     </TabsList>
                     {loc.specimens.map((s, i) => (
                       <TabsContent key={s.gbifID} value={String(i)} className="mt-1">
-                        <SpecimenInfo specimen={s} suggestedIds={suggestedIds} />
+                        <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
+                          <span className="text-muted-foreground font-medium">Collector</span>
+                          <span className="truncate">{s.recordedBy}</span>
+                          <span className="text-muted-foreground font-medium">Species</span>
+                          <em className="truncate">{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
+                        </div>
                       </TabsContent>
                     ))}
                   </Tabs>
                 )}
 
                 {/* Georef form - always shown */}
-                <InlineGeorefForm
-                  specimens={loc.specimens}
-                  mapClickCoords={mapClickCoords}
-                  onRequestMapClick={onRequestMapClick}
-                  onSubmit={onGeorefSubmit}
-                  disabled={!editMode}
-                />
+                <div className="mt-auto pt-1.5">
+                  <InlineGeorefForm
+                    specimens={loc.specimens}
+                    mapClickCoords={mapClickCoords}
+                    onRequestMapClick={onRequestMapClick}
+                    onSubmit={onGeorefSubmit}
+                    disabled={!editMode}
+                  />
+                </div>
               </div>
             </ScrollArea>
           </div>
