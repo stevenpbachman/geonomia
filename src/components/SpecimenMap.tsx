@@ -532,8 +532,8 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
 
       <div
         ref={containerRef}
-        className="rounded-lg overflow-hidden border shadow-sm resize-y"
-        style={{ height: 350, minHeight: 200, maxHeight: 700 }}
+        className="rounded-lg overflow-hidden border shadow-sm h-full"
+        style={{ minHeight: 200 }}
       />
     </div>
   );
