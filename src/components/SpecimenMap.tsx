@@ -66,6 +66,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   const gadmLayerRef = useRef<L.GeoJSON | null>(null);
   const [showHull, setShowHull] = useState(true);
   const hullLayerRef = useRef<L.GeoJSON | null>(null);
+  const suggestionsLayerRef = useRef<L.LayerGroup | null>(null);
 
   const geojson = toGeoJSON(records);
   const pointFeatures = geojson.features.filter((feature) => feature.geometry.type === "Point");
