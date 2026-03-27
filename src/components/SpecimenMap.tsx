@@ -178,6 +178,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       mapRef.current = null;
       measureLayerRef.current = null;
       hullLayerRef.current = null;
+      suggestionsLayerRef.current = null;
     };
   }, [records]);
 
