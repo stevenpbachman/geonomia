@@ -17,6 +17,7 @@ interface Props {
   georefMode?: boolean;
   onRequestMapClick?: () => void;
   onGeorefSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
+  mapSlot?: React.ReactNode;
 }
 
 function InlineGeorefForm({
