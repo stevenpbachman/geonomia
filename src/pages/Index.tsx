@@ -161,17 +161,15 @@ export default function Index() {
                 </span>
               </h2>
               <div className="flex gap-3">
-                <div className="w-[320px] flex-shrink-0">
-                  <LocationCarousel
-                    summaries={locationSummaries}
-                    onLocationSelect={setHighlightedLocation}
-                    suggestions={suggestions}
-                    mapClickCoords={mapClickCoords}
-                    georefMode={georefMode}
-                    onRequestMapClick={handleRequestMapClick}
-                    onGeorefSubmit={handleGeorefSubmit}
-                  />
-                </div>
+                <LocationCarousel
+                  summaries={locationSummaries}
+                  onLocationSelect={setHighlightedLocation}
+                  suggestions={suggestions}
+                  mapClickCoords={mapClickCoords}
+                  georefMode={georefMode}
+                  onRequestMapClick={handleRequestMapClick}
+                  onGeorefSubmit={handleGeorefSubmit}
+                />
                 <div className="flex-1 min-w-0">
                   <SpecimenMap
                     records={records}
