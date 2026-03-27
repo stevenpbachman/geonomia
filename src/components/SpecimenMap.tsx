@@ -49,7 +49,7 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)} km`;
 }
 
-export default function SpecimenMap({ records, highlightedLocation, georefMode, onGeorefClick }: Props) {
+export default function SpecimenMap({ records, highlightedLocation, georefMode, onGeorefClick, suggestions = [] }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const highlightRef = useRef<L.CircleMarker | null>(null);
