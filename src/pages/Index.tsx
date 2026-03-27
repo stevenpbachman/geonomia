@@ -160,26 +160,22 @@ export default function Index() {
                   ({locationSummaries.length} stops)
                 </span>
               </h2>
-              <div className="flex gap-3">
-                <LocationCarousel
-                  summaries={locationSummaries}
-                  onLocationSelect={setHighlightedLocation}
-                  suggestions={suggestions}
-                  mapClickCoords={mapClickCoords}
-                  georefMode={georefMode}
-                  onRequestMapClick={handleRequestMapClick}
-                  onGeorefSubmit={handleGeorefSubmit}
-                />
-                <div className="flex-1 min-w-0">
-                  <SpecimenMap
-                    records={records}
-                    highlightedLocation={highlightedLocation}
-                    georefMode={georefMode}
-                    onGeorefClick={handleMapGeorefClick}
-                    suggestions={suggestions}
-                  />
-                </div>
-              </div>
+              <SpecimenMap
+                records={records}
+                highlightedLocation={highlightedLocation}
+                georefMode={georefMode}
+                onGeorefClick={handleMapGeorefClick}
+                suggestions={suggestions}
+              />
+              <LocationCarousel
+                summaries={locationSummaries}
+                onLocationSelect={setHighlightedLocation}
+                suggestions={suggestions}
+                mapClickCoords={mapClickCoords}
+                georefMode={georefMode}
+                onRequestMapClick={handleRequestMapClick}
+                onGeorefSubmit={handleGeorefSubmit}
+              />
             </section>
 
             <section className="scroll-reveal">
