@@ -54,7 +54,7 @@ export default function Index() {
         </div>
       </header>
 
-      <main className="container max-w-5xl py-8 space-y-8">
+      <main className="container max-w-5xl py-6 space-y-6">
         {showInput && (
           <section className="scroll-reveal space-y-4">
             <Tabs defaultValue="search">
@@ -94,7 +94,7 @@ export default function Index() {
               <ItinerarySummary records={records} />
             </section>
 
-            <section className="scroll-reveal space-y-3">
+            <section className="scroll-reveal space-y-2">
               <h2 className="text-lg font-semibold">Collection Map</h2>
               <p className="text-sm text-muted-foreground">
                 Green markers = georeferenced specimens · Dashed orange polygon = MCP · Yellow highlight = selected stop
@@ -105,7 +105,7 @@ export default function Index() {
               />
             </section>
 
-            <section className="scroll-reveal space-y-3">
+            <section className="scroll-reveal space-y-2">
               <h2 className="text-lg font-semibold">
                 Locations Visited
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
