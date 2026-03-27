@@ -1,102 +1,193 @@
 /**
- * Fetch administrative boundaries via geoBoundaries API.
- * Tries from the finest level down to ADM1, returning the first that succeeds.
+ * Load administrative boundaries by spatially querying specimen points.
+ * We first determine the country from world country polygons, then fetch the
+ * finest available admin layer for that country and keep only polygons that
+ * contain at least one specimen point.
  */
 
 const GEO_BOUNDARIES_API = "https://www.geoboundaries.org/api/current/gbOpen";
+const COUNTRY_BOUNDARIES_URL = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
+const FETCH_TIMEOUT_MS = 15000;
 
-/** Reverse-geocode a point to get ISO-3166-1 alpha-3 country code */
-async function getCountryISO3(lat: number, lng: number): Promise<string | null> {
+type LatLngPoint = [number, number]; // [lat, lng]
+
+type GeoJSONFeature = {
+  geometry?: {
+    type: string;
+    coordinates: any;
+  } | null;
+  properties?: Record<string, any>;
+};
+
+type GeoJSONFeatureCollection = {
+  type: "FeatureCollection";
+  features: GeoJSONFeature[];
+};
+
+let countriesPromise: Promise<GeoJSONFeatureCollection | null> | null = null;
+const adminLayerCache = new Map<string, Promise<GeoJSONFeatureCollection | null>>();
+
+async function fetchJSON<T>(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=3`,
-      { headers: { "User-Agent": "Geonomia/1.0" } }
-    );
+    const res = await fetch(url, { signal: controller.signal });
     if (!res.ok) return null;
-    const data = await res.json();
-    const cc2 = data.address?.country_code?.toUpperCase();
-    if (!cc2) return null;
-    return iso2to3(cc2);
+    return await res.json();
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-/** Fetch geoBoundaries GeoJSON at a given admin level for a country */
-async function fetchBoundaryLevel(iso3: string, level: number): Promise<any | null> {
-  try {
-    // Step 1: get metadata including the simplified GeoJSON URL
-    const metaRes = await fetch(`${GEO_BOUNDARIES_API}/${iso3}/ADM${level}/`);
-    if (!metaRes.ok) return null;
-    const meta = await metaRes.json();
-
-    const gjUrl = meta.simplifiedGeometryGeoJSON || meta.gjDownloadURL;
-    if (!gjUrl) return null;
-
-    // Step 2: fetch the actual GeoJSON
-    const gjRes = await fetch(gjUrl);
-    if (!gjRes.ok) return null;
-    return await gjRes.json();
-  } catch {
-    return null;
+async function loadCountryBoundaries(): Promise<GeoJSONFeatureCollection | null> {
+  if (!countriesPromise) {
+    countriesPromise = fetchJSON<GeoJSONFeatureCollection>(COUNTRY_BOUNDARIES_URL);
   }
+  return countriesPromise;
 }
 
-export interface GADMResult {
-  geojson: any;
-  level: number;
-  country: string;
+async function fetchBoundaryLevel(iso3: string, level: number): Promise<GeoJSONFeatureCollection | null> {
+  const cacheKey = `${iso3}-ADM${level}`;
+  if (!adminLayerCache.has(cacheKey)) {
+    adminLayerCache.set(
+      cacheKey,
+      (async () => {
+        const meta = await fetchJSON<Record<string, any>>(`${GEO_BOUNDARIES_API}/${iso3}/ADM${level}/`);
+        const geometryUrl = meta?.simplifiedGeometryGeoJSON || meta?.gjDownloadURL;
+        if (!geometryUrl) return null;
+        return fetchJSON<GeoJSONFeatureCollection>(geometryUrl);
+      })()
+    );
+  }
+
+  return adminLayerCache.get(cacheKey) ?? null;
 }
 
-/**
- * Load the finest admin boundary level available for the country containing the given points.
- * maxLevel caps how deep we try (geoBoundaries typically has ADM0-ADM2, sometimes ADM3+).
- */
-export async function loadFinestGADM(
-  points: [number, number][], // [lat, lng]
-  maxLevel = 3
-): Promise<GADMResult | null> {
-  if (points.length === 0) return null;
+function pointInRing(point: LatLngPoint, ring: [number, number][]): boolean {
+  const x = point[1];
+  const y = point[0];
+  let inside = false;
 
-  const avgLat = points.reduce((s, p) => s + p[0], 0) / points.length;
-  const avgLng = points.reduce((s, p) => s + p[1], 0) / points.length;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
 
-  const iso3 = await getCountryISO3(avgLat, avgLng);
-  if (!iso3) return null;
+    const intersects = ((yi > y) !== (yj > y))
+      && (x < ((xj - xi) * (y - yi)) / ((yj - yi) || Number.EPSILON) + xi);
 
-  for (let level = maxLevel; level >= 1; level--) {
-    const geojson = await fetchBoundaryLevel(iso3, level);
-    if (geojson && geojson.features?.length > 0) {
-      return { geojson, level, country: iso3 };
-    }
+    if (intersects) inside = !inside;
+  }
+
+  return inside;
+}
+
+function pointInPolygon(point: LatLngPoint, polygon: [number, number][][]): boolean {
+  if (!polygon.length || !pointInRing(point, polygon[0])) return false;
+
+  for (let i = 1; i < polygon.length; i++) {
+    if (pointInRing(point, polygon[i])) return false;
+  }
+
+  return true;
+}
+
+function geometryContainsPoint(geometry: GeoJSONFeature["geometry"], point: LatLngPoint): boolean {
+  if (!geometry) return false;
+
+  if (geometry.type === "Polygon") {
+    return pointInPolygon(point, geometry.coordinates as [number, number][][]);
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return (geometry.coordinates as [number, number][][][]).some((polygon) => pointInPolygon(point, polygon));
+  }
+
+  return false;
+}
+
+function filterFeaturesByPoints(
+  geojson: GeoJSONFeatureCollection,
+  points: LatLngPoint[]
+): { geojson: GeoJSONFeatureCollection; matchedPointCount: number } {
+  const matchedFeatures = geojson.features.filter((feature) =>
+    points.some((point) => geometryContainsPoint(feature.geometry, point))
+  );
+
+  const matchedPointCount = points.filter((point) =>
+    matchedFeatures.some((feature) => geometryContainsPoint(feature.geometry, point))
+  ).length;
+
+  return {
+    geojson: {
+      type: "FeatureCollection",
+      features: matchedFeatures,
+    },
+    matchedPointCount,
+  };
+}
+
+async function getCountryISO3FromPoints(points: LatLngPoint[]): Promise<string | null> {
+  const countries = await loadCountryBoundaries();
+  if (!countries?.features?.length) return null;
+
+  const matchedCountries = new Set<string>();
+
+  for (const point of points) {
+    const match = countries.features.find((feature) => geometryContainsPoint(feature.geometry, point));
+    const iso3 = match?.properties?.["ISO3166-1-Alpha-3"];
+    if (iso3) matchedCountries.add(iso3);
+  }
+
+  if (matchedCountries.size === 1) {
+    return [...matchedCountries][0];
   }
 
   return null;
 }
 
-/** Minimal ISO 3166-1 alpha-2 → alpha-3 lookup */
-function iso2to3(cc2: string): string | null {
-  const map: Record<string, string> = {
-    AF:"AFG",AL:"ALB",DZ:"DZA",AS:"ASM",AD:"AND",AO:"AGO",AG:"ATG",AR:"ARG",AM:"ARM",AU:"AUS",
-    AT:"AUT",AZ:"AZE",BS:"BHS",BH:"BHR",BD:"BGD",BB:"BRB",BY:"BLR",BE:"BEL",BZ:"BLZ",BJ:"BEN",
-    BT:"BTN",BO:"BOL",BA:"BIH",BW:"BWA",BR:"BRA",BN:"BRN",BG:"BGR",BF:"BFA",BI:"BDI",CV:"CPV",
-    KH:"KHM",CM:"CMR",CA:"CAN",CF:"CAF",TD:"TCD",CL:"CHL",CN:"CHN",CO:"COL",KM:"COM",CG:"COG",
-    CD:"COD",CR:"CRI",CI:"CIV",HR:"HRV",CU:"CUB",CY:"CYP",CZ:"CZE",DK:"DNK",DJ:"DJI",DM:"DMA",
-    DO:"DOM",EC:"ECU",EG:"EGY",SV:"SLV",GQ:"GNQ",ER:"ERI",EE:"EST",SZ:"SWZ",ET:"ETH",FJ:"FJI",
-    FI:"FIN",FR:"FRA",GA:"GAB",GM:"GMB",GE:"GEO",DE:"DEU",GH:"GHA",GR:"GRC",GD:"GRD",GT:"GTM",
-    GN:"GIN",GW:"GNB",GY:"GUY",HT:"HTI",HN:"HND",HU:"HUN",IS:"ISL",IN:"IND",ID:"IDN",IR:"IRN",
-    IQ:"IRQ",IE:"IRL",IL:"ISR",IT:"ITA",JM:"JAM",JP:"JPN",JO:"JOR",KZ:"KAZ",KE:"KEN",KI:"KIR",
-    KP:"PRK",KR:"KOR",KW:"KWT",KG:"KGZ",LA:"LAO",LV:"LVA",LB:"LBN",LS:"LSO",LR:"LBR",LY:"LBY",
-    LI:"LIE",LT:"LTU",LU:"LUX",MG:"MDG",MW:"MWI",MY:"MYS",MV:"MDV",ML:"MLI",MT:"MLT",MH:"MHL",
-    MR:"MRT",MU:"MUS",MX:"MEX",FM:"FSM",MD:"MDA",MC:"MCO",MN:"MNG",ME:"MNE",MA:"MAR",MZ:"MOZ",
-    MM:"MMR",NA:"NAM",NR:"NRU",NP:"NPL",NL:"NLD",NZ:"NZL",NI:"NIC",NE:"NER",NG:"NGA",NO:"NOR",
-    OM:"OMN",PK:"PAK",PW:"PLW",PA:"PAN",PG:"PNG",PY:"PRY",PE:"PER",PH:"PHL",PL:"POL",PT:"PRT",
-    QA:"QAT",RO:"ROU",RU:"RUS",RW:"RWA",KN:"KNA",LC:"LCA",VC:"VCT",WS:"WSM",SM:"SMR",ST:"STP",
-    SA:"SAU",SN:"SEN",RS:"SRB",SC:"SYC",SL:"SLE",SG:"SGP",SK:"SVK",SI:"SVN",SB:"SLB",SO:"SOM",
-    ZA:"ZAF",SS:"SSD",ES:"ESP",LK:"LKA",SD:"SDN",SR:"SUR",SE:"SWE",CH:"CHE",SY:"SYR",TW:"TWN",
-    TJ:"TJK",TZ:"TZA",TH:"THA",TL:"TLS",TG:"TGO",TO:"TON",TT:"TTO",TN:"TUN",TR:"TUR",TM:"TKM",
-    TV:"TUV",UG:"UGA",UA:"UKR",AE:"ARE",GB:"GBR",US:"USA",UY:"URY",UZ:"UZB",VU:"VUT",VE:"VEN",
-    VN:"VNM",YE:"YEM",ZM:"ZMB",ZW:"ZWE",PS:"PSE",XK:"XKO",
-  };
-  return map[cc2] || null;
+export interface GADMResult {
+  geojson: GeoJSONFeatureCollection;
+  level: number;
+  country: string;
+}
+
+/**
+ * Load the finest admin boundary level available for the points' country.
+ * Returns only the polygons that spatially contain at least one point.
+ */
+export async function loadFinestGADM(
+  points: LatLngPoint[],
+  maxLevel = 4
+): Promise<GADMResult | null> {
+  if (points.length === 0) return null;
+
+  const iso3 = await getCountryISO3FromPoints(points);
+  if (!iso3) return null;
+
+  let bestPartial: GADMResult | null = null;
+  let bestMatchedPointCount = -1;
+
+  for (let level = maxLevel; level >= 1; level--) {
+    const geojson = await fetchBoundaryLevel(iso3, level);
+    if (!geojson?.features?.length) continue;
+
+    const filtered = filterFeaturesByPoints(geojson, points);
+    if (!filtered.geojson.features.length) continue;
+
+    if (filtered.matchedPointCount === points.length) {
+      return { geojson: filtered.geojson, level, country: iso3 };
+    }
+
+    if (filtered.matchedPointCount > bestMatchedPointCount) {
+      bestMatchedPointCount = filtered.matchedPointCount;
+      bestPartial = { geojson: filtered.geojson, level, country: iso3 };
+    }
+  }
+
+  return bestPartial;
 }
