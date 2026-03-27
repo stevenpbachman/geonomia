@@ -181,21 +181,30 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
 
     if (points.length === 0) {
       setGadmData(null);
+      setGadmLoading(false);
       return;
     }
 
     let cancelled = false;
     setGadmLoading(true);
-    loadFinestGADM(points).then((result) => {
-      if (!cancelled) {
-        setGadmData(result);
-        setGadmLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setGadmLoading(false);
-    });
 
-    return () => { cancelled = true; };
+    loadFinestGADM(points)
+      .then((result) => {
+        if (!cancelled) {
+          setGadmData(result);
+          setGadmLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGadmData(null);
+          setGadmLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [records]);
 
   // Toggle GADM layer on/off
@@ -218,9 +227,9 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
           dashArray: "4 3",
         }),
         onEachFeature: (feature, layer) => {
-          const p = feature.properties;
-          const name = p.NAME_4 || p.NAME_3 || p.NAME_2 || p.NAME_1 || p.NAME_0 || "Unknown";
-          const type = p.TYPE_4 || p.TYPE_3 || p.TYPE_2 || p.TYPE_1 || p.TYPE_0 || "";
+          const p = feature.properties ?? {};
+          const name = p.shapeName || p.NAME_4 || p.NAME_3 || p.NAME_2 || p.NAME_1 || p.NAME_0 || "Unknown";
+          const type = p.shapeType || p.TYPE_4 || p.TYPE_3 || p.TYPE_2 || p.TYPE_1 || p.TYPE_0 || "";
           layer.bindPopup(
             `<div style="font-family:DM Sans,sans-serif">
               <strong>${name}</strong>${type ? ` <span style="color:#888;font-size:0.85em">(${type})</span>` : ""}
