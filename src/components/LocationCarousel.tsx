@@ -1,21 +1,133 @@
 import { useEffect, useState, useMemo } from "react";
-import { LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
-import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair } from "lucide-react";
+import { LocationSummary, GeoreferenceSuggestion, SpecimenRecord } from "@/lib/types";
+import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair, ChevronDown, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toast } from "sonner";
 
 interface Props {
   summaries: LocationSummary[];
   onLocationSelect?: (summary: LocationSummary | null) => void;
-  onGeoreferenceRequest?: (specimen: import("@/lib/types").SpecimenRecord) => void;
   suggestions?: GeoreferenceSuggestion[];
+  mapClickCoords?: { lat: number; lng: number } | null;
+  georefMode?: boolean;
+  onRequestMapClick?: () => void;
+  onGeorefSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
 }
 
-export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest, suggestions = [] }: Props) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+function InlineGeorefForm({
+  specimens,
+  locality,
+  mapClickCoords,
+  onRequestMapClick,
+  onSubmit,
+}: {
+  specimens: SpecimenRecord[];
+  locality: string;
+  mapClickCoords?: { lat: number; lng: number } | null;
+  onRequestMapClick?: () => void;
+  onSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
+}) {
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+  const [uncertainty, setUncertainty] = useState("");
+  const [remarks, setRemarks] = useState("");
 
-  // Build a set of gbifIDs that have suggestions
+  useEffect(() => {
+    if (mapClickCoords) {
+      setLat(mapClickCoords.lat.toFixed(6));
+      setLng(mapClickCoords.lng.toFixed(6));
+    }
+  }, [mapClickCoords]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      toast.error("Please enter valid coordinates");
+      return;
+    }
+    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+      toast.error("Coordinates out of range");
+      return;
+    }
+
+    const suggestions: GeoreferenceSuggestion[] = specimens.map((s) => ({
+      gbifID: s.gbifID,
+      decimalLatitude: latNum,
+      decimalLongitude: lngNum,
+      geodeticDatum: "WGS84",
+      coordinateUncertaintyInMeters: uncertainty ? parseFloat(uncertainty) : null,
+      coordinatePrecision: null,
+      pointRadiusSpatialFit: null,
+      georeferenceProtocol: "",
+      georeferenceSources: "",
+      georeferenceRemarks: remarks,
+      georeferencedBy: "",
+      georeferencedDate: new Date().toISOString().split("T")[0],
+    }));
+
+    onSubmit?.(suggestions);
+    toast.success(`Georeference saved for ${suggestions.length} specimen${suggestions.length > 1 ? "s" : ""}`);
+    setLat("");
+    setLng("");
+    setUncertainty("");
+    setRemarks("");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2 pt-2 border-t border-border mt-2">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+        <Crosshair className="w-3 h-3" />
+        Georeference ({specimens.length} specimen{specimens.length > 1 ? "s" : ""})
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <label className="text-[11px] font-medium text-muted-foreground">Lat</label>
+          <Input type="number" step="any" placeholder="-23.55" value={lat} onChange={(e) => setLat(e.target.value)} className="h-7 text-xs" />
+        </div>
+        <div className="space-y-0.5">
+          <label className="text-[11px] font-medium text-muted-foreground">Lng</label>
+          <Input type="number" step="any" placeholder="-46.63" value={lng} onChange={(e) => setLng(e.target.value)} className="h-7 text-xs" />
+        </div>
+      </div>
+      <div className="flex gap-2 items-end">
+        <div className="space-y-0.5 flex-1">
+          <label className="text-[11px] font-medium text-muted-foreground">Uncertainty (m)</label>
+          <Input type="number" step="any" placeholder="1000" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-7 text-xs" />
+        </div>
+        <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-[11px]" onClick={onRequestMapClick}>
+          <Crosshair className="w-3 h-3" /> Click map
+        </Button>
+      </div>
+      <div className="space-y-0.5">
+        <label className="text-[11px] font-medium text-muted-foreground">Remarks</label>
+        <Textarea placeholder="Notes..." value={remarks} onChange={(e) => setRemarks(e.target.value)} className="text-xs min-h-[32px]" />
+      </div>
+      <Button type="submit" size="sm" className="w-full gap-1.5 h-7 text-xs">
+        <Save className="w-3 h-3" /> Save
+      </Button>
+    </form>
+  );
+}
+
+export default function LocationCarousel({
+  summaries,
+  onLocationSelect,
+  suggestions = [],
+  mapClickCoords,
+  georefMode,
+  onRequestMapClick,
+  onGeorefSubmit,
+}: Props) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+
   const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
-  // Map gbifID -> suggestion for coords
   const suggestionMap = useMemo(() => {
     const m = new Map<string, GeoreferenceSuggestion>();
     suggestions.forEach(s => m.set(s.gbifID, s));
@@ -34,8 +146,12 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < summaries.length - 1;
   const isUngeoreferenced = loc.lat === null || loc.lon === null;
-  // Check if this ungeoref location has a suggestion
   const hasSuggestion = isUngeoreferenced && loc.specimens.some(s => suggestedIds.has(s.gbifID));
+  const needsGeoref = isUngeoreferenced && !hasSuggestion;
+
+  const ungeorefSpecimens = loc.specimens.filter(
+    s => s.decimalLatitude === null || s.decimalLongitude === null
+  );
 
   const goTo = (idx: number) => {
     setCurrentIndex(idx);
@@ -43,7 +159,6 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
     if (s?.lat !== null && s?.lon !== null) {
       onLocationSelect?.(s);
     } else {
-      // Check if there's a suggestion for any specimen at this location
       const sugSpec = s?.specimens.find(sp => suggestionMap.has(sp.gbifID));
       if (sugSpec) {
         const sug = suggestionMap.get(sugSpec.gbifID)!;
@@ -57,186 +172,148 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
 
   return (
-    <div className="space-y-3">
-      {/* Scrubber with stop indicators */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-            {summaries[0]?.date}
-          </span>
-          <div className="flex-1 relative h-6">
-            {/* Track line */}
-            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-border rounded-full" />
-            {/* Progress line up to current */}
-            {summaries.length > 1 && (
-              <div
-                className="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-muted-foreground/30 rounded-full"
-                style={{ width: `${(currentIndex / (summaries.length - 1)) * 100}%` }}
-              />
-            )}
-            {/* Stop dots */}
-            {summaries.map((s, i) => {
-              const isUngeoref = s.lat === null || s.lon === null;
-              const isSuggested = isUngeoref && s.specimens.some(sp => suggestedIds.has(sp.gbifID));
-              const isCurrent = i === currentIndex;
-              const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
-              return (
-                <button
-                  key={i}
-                  onClick={() => goTo(i)}
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1"
-                  style={{ left: `${pct}%` }}
-                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? (isSuggested ? " (suggested)" : " (no coords)") : ""}`}
-                >
-                  <div
-                    className={`rounded-full transition-all ${
-                      isCurrent
-                        ? "w-3 h-3 ring-2 ring-primary ring-offset-1 ring-offset-background"
-                        : "w-2 h-2"
-                    } ${
-                      isUngeoref
-                        ? isSuggested
-                          ? "bg-blue-500"
-                          : "bg-destructive"
-                        : "bg-primary"
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-          <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-            {summaries[summaries.length - 1]?.date}
-          </span>
-        </div>
-        {/* Legend */}
-        <div className="flex items-center gap-4 justify-center text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-primary" />
-            Georeferenced
-          </span>
-          {suggestions.length > 0 && (
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
-              Suggested
-            </span>
-          )}
-          {ungeorefCount > 0 && (
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-destructive" />
-              No coordinates ({ungeorefCount})
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled={!canPrev}
-          onClick={() => goTo(currentIndex - 1)}
-          className="h-full min-h-[160px] self-stretch"
-        >
-          <ChevronLeft className="w-5 h-5" />
+    <div className="space-y-2">
+      {/* Scrubber row: arrows + track */}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" disabled={!canPrev} onClick={() => goTo(currentIndex - 1)} className="h-8 w-8 flex-shrink-0">
+          <ChevronLeft className="w-4 h-4" />
         </Button>
 
-        <div className={`rounded-lg border p-5 shadow-sm min-h-[160px] transition-all duration-200 ${
-          isUngeoreferenced
-            ? "bg-destructive/5 border-destructive/30"
-            : "bg-card border-border"
-        }`}>
-          <div className="flex items-start gap-3">
-            <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-mono text-sm font-semibold ${
-              isUngeoreferenced
-                ? "bg-destructive/10 text-destructive"
-                : "bg-botanical-light text-primary"
+        <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{summaries[0]?.date}</span>
+
+        <div className="flex-1 relative h-6">
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[2px] bg-border rounded-full" />
+          {summaries.length > 1 && (
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 h-[2px] bg-muted-foreground/30 rounded-full" style={{ width: `${(currentIndex / (summaries.length - 1)) * 100}%` }} />
+          )}
+          {summaries.map((s, i) => {
+            const isUngeoref = s.lat === null || s.lon === null;
+            const isSuggested = isUngeoref && s.specimens.some(sp => suggestedIds.has(sp.gbifID));
+            const isCurrent = i === currentIndex;
+            const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
+            return (
+              <button key={i} onClick={() => goTo(i)} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1" style={{ left: `${pct}%` }} title={`Stop ${i + 1}: ${s.locality}`}>
+                <div className={`rounded-full transition-all ${isCurrent ? "w-3 h-3 ring-2 ring-primary ring-offset-1 ring-offset-background" : "w-2 h-2"} ${isUngeoref ? (isSuggested ? "bg-blue-500" : "bg-destructive") : "bg-primary"}`} />
+              </button>
+            );
+          })}
+        </div>
+
+        <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{summaries[summaries.length - 1]?.date}</span>
+
+        <Button variant="ghost" size="icon" disabled={!canNext} onClick={() => goTo(currentIndex + 1)} className="h-8 w-8 flex-shrink-0">
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 justify-center text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-primary" /> Georeferenced</span>
+        {suggestions.length > 0 && <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-blue-500" /> Suggested</span>}
+        {ungeorefCount > 0 && <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-destructive" /> No coords ({ungeorefCount})</span>}
+        <span className="text-muted-foreground/60">Stop {currentIndex + 1}/{summaries.length}</span>
+      </div>
+
+      {/* Collapsible accordion for current location */}
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-sm transition-colors ${
+            needsGeoref ? "bg-destructive/5 border-destructive/30" : hasSuggestion ? "bg-blue-500/5 border-blue-500/30" : "bg-card border-border"
+          } hover:bg-accent/50`}>
+            <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs font-semibold ${
+              needsGeoref ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
             }`}>
               {currentIndex + 1}
             </div>
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="w-3 h-3 flex-shrink-0" />
                 <span className="font-mono">{loc.date}</span>
-                {loc.lat !== null && loc.lon !== null ? (
-                  <>
-                    <span className="text-border">·</span>
-                    <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-primary" />
-                    <span className="font-mono text-xs">
-                      {loc.lat.toFixed(2)}°, {loc.lon.toFixed(2)}°
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-border">·</span>
-                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-destructive" />
-                    <span className="text-xs text-destructive font-medium">No coordinates</span>
-                  </>
-                )}
+                <span className="text-border">·</span>
+                <span className="truncate font-medium text-foreground">{loc.locality}</span>
+                <span className="text-border">·</span>
+                <Leaf className="w-3 h-3 flex-shrink-0" />
+                <span>{loc.specimens.length}</span>
               </div>
-
-              <div className="space-y-2">
-                {loc.specimens.map((s) => (
-                  <div
-                    key={s.gbifID}
-                    className="bg-muted rounded-md px-3 py-2 space-y-1"
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                      <span className="truncate">{s.recordedBy}</span>
-                      <span className="text-border">·</span>
-                      <Hash className="w-3 h-3 flex-shrink-0" />
-                      <span className="font-mono font-semibold">{s.recordNumber}</span>
-                      <div className="ml-auto flex items-center gap-1.5">
-                        <a
-                          href={`https://www.gbif.org/occurrence/${s.gbifID}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-medium text-foreground hover:bg-accent transition-colors"
-                          title="View specimen on GBIF"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          GBIF
-                        </a>
-                        {(s.decimalLatitude === null || s.decimalLongitude === null) && onGeoreferenceRequest && (
-                          <button
-                            onClick={() => onGeoreferenceRequest(s)}
-                            className="inline-flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/20 transition-colors"
-                            title="Suggest coordinates for this specimen"
-                          >
-                            <Crosshair className="w-3 h-3" />
-                            Georeference
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Leaf className="w-3 h-3 text-primary flex-shrink-0" />
-                      <em>{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-xs text-muted-foreground leading-snug">{loc.locality}</p>
             </div>
+            {needsGeoref && <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />}
+            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className={`mt-1 rounded-lg border px-3 py-2 space-y-2 ${
+            needsGeoref ? "bg-destructive/5 border-destructive/20" : "bg-card border-border"
+          }`}>
+            {/* Location info */}
+            <div className="text-xs text-muted-foreground">
+              <MapPin className="w-3 h-3 inline mr-1" />
+              {loc.locality}
+              {loc.lat !== null && loc.lon !== null && (
+                <span className="ml-2 font-mono">{loc.lat.toFixed(4)}°, {loc.lon.toFixed(4)}°</span>
+              )}
+            </div>
+
+            {/* Specimen tabs if multiple, otherwise just show inline */}
+            {loc.specimens.length === 1 ? (
+              <SpecimenInfo specimen={loc.specimens[0]} suggestedIds={suggestedIds} />
+            ) : (
+              <Tabs defaultValue="0" className="w-full">
+                <TabsList className="h-7 p-0.5">
+                  {loc.specimens.map((s, i) => (
+                    <TabsTrigger key={s.gbifID} value={String(i)} className="text-[11px] px-2 py-0.5 h-6">
+                      #{s.recordNumber}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {loc.specimens.map((s, i) => (
+                  <TabsContent key={s.gbifID} value={String(i)} className="mt-1">
+                    <SpecimenInfo specimen={s} suggestedIds={suggestedIds} />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            )}
+
+            {/* Inline georef form for ungeoreferenced localities */}
+            {needsGeoref && ungeorefSpecimens.length > 0 && (
+              <InlineGeorefForm
+                specimens={ungeorefSpecimens}
+                locality={loc.locality}
+                mapClickCoords={mapClickCoords}
+                onRequestMapClick={onRequestMapClick}
+                onSubmit={onGeorefSubmit}
+              />
+            )}
           </div>
-        </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled={!canNext}
-          onClick={() => goTo(currentIndex + 1)}
-          className="h-full min-h-[160px] self-stretch"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </Button>
+function SpecimenInfo({ specimen, suggestedIds }: { specimen: SpecimenRecord; suggestedIds: Set<string> }) {
+  const hasSuggestion = suggestedIds.has(specimen.gbifID);
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2 text-xs">
+        <User className="w-3 h-3 text-primary flex-shrink-0" />
+        <span className="font-medium truncate">{specimen.recordedBy}</span>
+        <Hash className="w-2.5 h-2.5 flex-shrink-0" />
+        <span className="font-mono font-semibold">{specimen.recordNumber}</span>
+        {hasSuggestion && <span className="text-[10px] text-blue-500 font-medium ml-auto">georef'd</span>}
       </div>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Stop {currentIndex + 1} of {summaries.length}
-      </p>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Leaf className="w-3 h-3 text-primary flex-shrink-0" />
+        <em>{specimen.scientificName.split(" ").slice(0, 2).join(" ")}</em>
+        <a
+          href={`https://www.gbif.org/occurrence/${specimen.gbifID}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium hover:bg-accent transition-colors"
+        >
+          <ExternalLink className="w-2.5 h-2.5" /> GBIF
+        </a>
+      </div>
     </div>
   );
 }
