@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
+import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
@@ -9,63 +9,21 @@ import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
 import CollectingTeams from "@/components/CollectingTeams";
 import GeoJSONExport from "@/components/GeoJSONExport";
-import GeoreferenceForm from "@/components/GeoreferenceForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Leaf, Database, Search, Upload, MapPin, Download } from "lucide-react";
-import { toast } from "sonner";
+import { Leaf, Database, Search, Upload } from "lucide-react";
 
 export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
   const [showInput, setShowInput] = useState(true);
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
-  const [georefTarget, setGeorefTarget] = useState<SpecimenRecord | null>(null);
-  const [georefMode, setGeorefMode] = useState(false);
-  const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [suggestions, setSuggestions] = useState<GeoreferenceSuggestion[]>([]);
 
   const handleLoad = (data: SpecimenRecord[]) => {
     setRecords(data);
     setShowInput(false);
-    setSuggestions([]);
-    setGeorefTarget(null);
   };
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
-
-  const ungeoreferencedRecords = useMemo(
-    () => records?.filter((r) => r.decimalLatitude == null || r.decimalLongitude == null) ?? [],
-    [records]
-  );
-
-  const handleGeorefClick = useCallback((coords: { lat: number; lng: number }) => {
-    setMapClickCoords(coords);
-    setGeorefMode(false);
-  }, []);
-
-  const handleGeorefSubmit = useCallback((suggestion: GeoreferenceSuggestion) => {
-    setSuggestions((prev) => [...prev.filter((s) => s.gbifID !== suggestion.gbifID), suggestion]);
-    setGeorefTarget(null);
-    setGeorefMode(false);
-    setMapClickCoords(null);
-  }, []);
-
-  const exportSuggestions = useCallback(() => {
-    if (suggestions.length === 0) return;
-    const headers = Object.keys(suggestions[0]);
-    const csv = [
-      headers.join(","),
-      ...suggestions.map((s) => headers.map((h) => JSON.stringify((s as any)[h] ?? "")).join(",")),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "georeference_suggestions.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`Exported ${suggestions.length} suggestion(s)`);
-  }, [suggestions]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,94 +102,8 @@ export default function Index() {
               <SpecimenMap
                 records={records}
                 highlightedLocation={highlightedLocation}
-                georefMode={georefMode}
-                onGeorefClick={handleGeorefClick}
               />
             </section>
-
-            {/* Georeference suggestions */}
-            {ungeoreferencedRecords.length > 0 && (
-              <section className="scroll-reveal space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-destructive" />
-                      Ungeoreferenced Specimens
-                      <span className="ml-1 text-sm font-normal text-muted-foreground">
-                        ({ungeoreferencedRecords.length} records)
-                      </span>
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Click a specimen to suggest a georeference using Darwin Core fields
-                    </p>
-                  </div>
-                  {suggestions.length > 0 && (
-                    <Button variant="outline" size="sm" className="gap-2" onClick={exportSuggestions}>
-                      <Download className="w-3.5 h-3.5" />
-                      Export {suggestions.length} suggestion(s)
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid gap-2 md:grid-cols-2">
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                    {ungeoreferencedRecords.map((rec) => {
-                      const hasSuggestion = suggestions.some((s) => s.gbifID === rec.gbifID);
-                      const isActive = georefTarget?.gbifID === rec.gbifID;
-                      return (
-                        <button
-                          key={rec.gbifID}
-                          onClick={() => {
-                            setGeorefTarget(rec);
-                            setMapClickCoords(null);
-                            setGeorefMode(false);
-                          }}
-                          className={`w-full text-left rounded-md border px-3 py-2 text-sm transition-colors ${
-                            isActive
-                              ? "border-primary bg-primary/5"
-                              : hasSuggestion
-                              ? "border-green-500/50 bg-green-50 dark:bg-green-950/20"
-                              : "border-border bg-card hover:bg-accent"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium truncate">{rec.scientificName}</span>
-                            {hasSuggestion && (
-                              <span className="text-xs text-green-600 dark:text-green-400 ml-2 flex-shrink-0">✓ suggested</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            #{rec.recordNumber} · {rec.eventDate} · {rec.locality}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div>
-                    {georefTarget ? (
-                      <GeoreferenceForm
-                        specimen={georefTarget}
-                        mapClickCoords={mapClickCoords}
-                        onSubmit={handleGeorefSubmit}
-                        onCancel={() => {
-                          setGeorefTarget(null);
-                          setGeorefMode(false);
-                          setMapClickCoords(null);
-                        }}
-                        onRequestMapClick={() => setGeorefMode(true)}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full min-h-[200px] rounded-lg border border-dashed bg-muted/50">
-                        <p className="text-sm text-muted-foreground">
-                          Select a specimen to suggest coordinates
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-            )}
 
             <section className="scroll-reveal space-y-3">
               <h2 className="text-lg font-semibold">
