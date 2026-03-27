@@ -96,11 +96,11 @@ function InlineGeorefForm({
         <div className="grid grid-cols-2 gap-1.5">
           <div className="space-y-0.5">
             <label className="text-[10px] font-medium text-muted-foreground">Lat</label>
-            <Input type="number" step="any" placeholder="-23.55" value={lat} onChange={(e) => setLat(e.target.value)} className="h-6 text-[11px]" />
+            <Input type="number" step="any" placeholder="" value={lat} onChange={(e) => setLat(e.target.value)} className="h-6 text-[11px]" />
           </div>
           <div className="space-y-0.5">
             <label className="text-[10px] font-medium text-muted-foreground">Lng</label>
-            <Input type="number" step="any" placeholder="-46.63" value={lng} onChange={(e) => setLng(e.target.value)} className="h-6 text-[11px]" />
+            <Input type="number" step="any" placeholder="" value={lng} onChange={(e) => setLng(e.target.value)} className="h-6 text-[11px]" />
           </div>
         </div>
         <div className="flex gap-1.5 items-end mt-1.5">
@@ -212,7 +212,7 @@ export default function LocationCarousel({
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* Top row: sliding panel + map side by side */}
-      <div className="flex w-full items-stretch">
+      <div className="flex w-full items-stretch" style={{ minHeight: 400 }}>
         {/* Side panel - slides left-to-right */}
         <div
           className={`overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 ${
@@ -264,10 +264,7 @@ export default function LocationCarousel({
                       <span className="font-mono">{loc.date}</span>
                       {needsGeoref && <AlertTriangle className="w-3 h-3 text-destructive ml-auto flex-shrink-0" />}
                     </div>
-                    <div className="flex items-start gap-1 mt-0.5">
-                      <MapPin className="w-2.5 h-2.5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <span className="text-[11px] font-medium leading-tight">{loc.locality}</span>
-                    </div>
+                    <span className="text-[11px] font-medium leading-tight">{loc.locality}</span>
                   </div>
                 </div>
 
