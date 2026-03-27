@@ -7,8 +7,6 @@ import ClusterSearch from "@/components/ClusterSearch";
 import ItinerarySummary from "@/components/ItinerarySummary";
 import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
-import CollectingTeams from "@/components/CollectingTeams";
-import GeoJSONExport from "@/components/GeoJSONExport";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Leaf, Database, Search, Upload, Download } from "lucide-react";
@@ -180,13 +178,6 @@ export default function Index() {
               />
             </section>
 
-            <section className="scroll-reveal">
-              <GeoJSONExport records={records} />
-            </section>
-
-            <section className="scroll-reveal">
-              <CollectingTeams records={records} />
-            </section>
           </>
         )}
       </main>
