@@ -432,6 +432,8 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
         .addTo(suggestionsLayerRef.current!);
     });
   }, [suggestions]);
+
+  if (geojson.features.length === 0 && suggestions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 rounded-lg bg-muted">
         <p className="text-muted-foreground">No georeferenced records to display</p>
