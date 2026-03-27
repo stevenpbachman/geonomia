@@ -160,13 +160,6 @@ export default function Index() {
                   ({locationSummaries.length} stops)
                 </span>
               </h2>
-              <SpecimenMap
-                records={records}
-                highlightedLocation={highlightedLocation}
-                georefMode={georefMode}
-                onGeorefClick={handleMapGeorefClick}
-                suggestions={suggestions}
-              />
               <LocationCarousel
                 summaries={locationSummaries}
                 onLocationSelect={setHighlightedLocation}
@@ -175,6 +168,15 @@ export default function Index() {
                 georefMode={georefMode}
                 onRequestMapClick={handleRequestMapClick}
                 onGeorefSubmit={handleGeorefSubmit}
+                mapSlot={
+                  <SpecimenMap
+                    records={records}
+                    highlightedLocation={highlightedLocation}
+                    georefMode={georefMode}
+                    onGeorefClick={handleMapGeorefClick}
+                    suggestions={suggestions}
+                  />
+                }
               />
             </section>
 
