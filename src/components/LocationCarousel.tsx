@@ -89,7 +89,6 @@ function InlineGeorefForm({
     onSubmit?.(suggestions);
     toast.success(`Georeference saved for ${suggestions.length} specimen${suggestions.length > 1 ? "s" : ""}`);
   };
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-1.5 pt-2 border-t border-border mt-2">
