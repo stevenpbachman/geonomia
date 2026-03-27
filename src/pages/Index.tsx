@@ -154,32 +154,34 @@ export default function Index() {
             </section>
 
             <section className="scroll-reveal space-y-2">
-              <h2 className="text-lg font-semibold">Collection Map</h2>
-              <SpecimenMap
-                records={records}
-                highlightedLocation={highlightedLocation}
-                georefMode={georefMode}
-                onGeorefClick={handleMapGeorefClick}
-                suggestions={suggestions}
-              />
-            </section>
-
-            <section className="scroll-reveal space-y-2">
               <h2 className="text-lg font-semibold">
-                Locations Visited
+                Collection Map
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
                   ({locationSummaries.length} stops)
                 </span>
               </h2>
-              <LocationCarousel
-                summaries={locationSummaries}
-                onLocationSelect={setHighlightedLocation}
-                suggestions={suggestions}
-                mapClickCoords={mapClickCoords}
-                georefMode={georefMode}
-                onRequestMapClick={handleRequestMapClick}
-                onGeorefSubmit={handleGeorefSubmit}
-              />
+              <div className="flex gap-3">
+                <div className="w-[320px] flex-shrink-0">
+                  <LocationCarousel
+                    summaries={locationSummaries}
+                    onLocationSelect={setHighlightedLocation}
+                    suggestions={suggestions}
+                    mapClickCoords={mapClickCoords}
+                    georefMode={georefMode}
+                    onRequestMapClick={handleRequestMapClick}
+                    onGeorefSubmit={handleGeorefSubmit}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <SpecimenMap
+                    records={records}
+                    highlightedLocation={highlightedLocation}
+                    georefMode={georefMode}
+                    onGeorefClick={handleMapGeorefClick}
+                    suggestions={suggestions}
+                  />
+                </div>
+              </div>
             </section>
 
             <section className="scroll-reveal">
