@@ -254,28 +254,6 @@ export default function LocationCarousel({
                 <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
                   <span className="text-muted-foreground font-medium">Date</span>
                   <span className="font-mono">{loc.date}</span>
-
-                  <span className="text-muted-foreground font-medium">Collector</span>
-                  <span className="truncate">{loc.specimens[0]?.recordedBy}</span>
-
-                  <span className="text-muted-foreground font-medium">Number</span>
-                  <div className="flex items-center gap-1">
-                    <span className="font-mono font-semibold">{loc.specimens[0]?.recordNumber}</span>
-                    {loc.specimens.length > 1 && (
-                      <span className="text-muted-foreground">+{loc.specimens.length - 1} more</span>
-                    )}
-                    <a
-                      href={`https://www.gbif.org/occurrence/${loc.specimens[0]?.gbifID}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto inline-flex items-center gap-0.5 rounded border border-border px-1 text-[9px] font-medium hover:bg-accent transition-colors flex-shrink-0"
-                    >
-                      <ExternalLink className="w-2 h-2" /> GBIF
-                    </a>
-                  </div>
-
-                  <span className="text-muted-foreground font-medium">Species</span>
-                  <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                 </div>
 
                 {/* Locality - fixed height, scrollable */}
@@ -286,8 +264,22 @@ export default function LocationCarousel({
                   </div>
                 </div>
 
-                {/* Specimen tabs if multiple */}
-                {loc.specimens.length > 1 && (
+                {/* Specimens - always show collector/number/species per specimen */}
+                {loc.specimens.length === 1 ? (
+                  <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px] mt-1.5">
+                    <span className="text-muted-foreground font-medium">Collector</span>
+                    <span className="truncate">{loc.specimens[0]?.recordedBy}</span>
+                    <span className="text-muted-foreground font-medium">Number</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono font-semibold">{loc.specimens[0]?.recordNumber}</span>
+                      <a href={`https://www.gbif.org/occurrence/${loc.specimens[0]?.gbifID}`} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-0.5 rounded border border-border px-1 text-[9px] font-medium hover:bg-accent transition-colors flex-shrink-0">
+                        <ExternalLink className="w-2 h-2" /> GBIF
+                      </a>
+                    </div>
+                    <span className="text-muted-foreground font-medium">Species</span>
+                    <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
+                  </div>
+                ) : (
                   <Tabs defaultValue="0" className="w-full mt-1.5">
                     <TabsList className="h-6 p-0.5 w-full">
                       {loc.specimens.map((s, i) => (
@@ -301,6 +293,13 @@ export default function LocationCarousel({
                         <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
                           <span className="text-muted-foreground font-medium">Collector</span>
                           <span className="truncate">{s.recordedBy}</span>
+                          <span className="text-muted-foreground font-medium">Number</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono font-semibold">{s.recordNumber}</span>
+                            <a href={`https://www.gbif.org/occurrence/${s.gbifID}`} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-0.5 rounded border border-border px-1 text-[9px] font-medium hover:bg-accent transition-colors flex-shrink-0">
+                              <ExternalLink className="w-2 h-2" /> GBIF
+                            </a>
+                          </div>
                           <span className="text-muted-foreground font-medium">Species</span>
                           <em className="truncate">{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                         </div>
