@@ -180,6 +180,7 @@ export default function LocationCarousel({
     onLocationSelect?.(first?.lat !== null && first?.lon !== null ? first : null);
   }, [summaries, onLocationSelect]);
 
+  const loc = summaries[currentIndex];
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -193,6 +194,7 @@ export default function LocationCarousel({
     return () => observer.disconnect();
   }, [currentIndex, panelOpen, editMode, loc?.locality, mapClickCoords, summaries.length]);
 
+  if (!loc) return null;
 
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < summaries.length - 1;
