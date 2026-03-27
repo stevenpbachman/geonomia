@@ -3,7 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import * as GeocoderModule from "leaflet-control-geocoder";
-import { SpecimenRecord, LocationSummary } from "@/lib/types";
+import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
 import { loadFinestGADM, GADMResult } from "@/lib/gadm";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,9 @@ const Geocoder = (GeocoderModule as any).geocoders
 interface Props {
   records: SpecimenRecord[];
   highlightedLocation?: LocationSummary | null;
-  /** When true, next map click fires onGeorefClick instead of normal behavior */
   georefMode?: boolean;
   onGeorefClick?: (coords: { lat: number; lng: number }) => void;
+  suggestions?: GeoreferenceSuggestion[];
 }
 
 const TILE_LAYERS: Record<string, { url: string; attribution: string; name: string }> = {
@@ -49,7 +49,7 @@ function formatDistance(meters: number): string {
   return `${(meters / 1000).toFixed(2)} km`;
 }
 
-export default function SpecimenMap({ records, highlightedLocation, georefMode, onGeorefClick }: Props) {
+export default function SpecimenMap({ records, highlightedLocation, georefMode, onGeorefClick, suggestions = [] }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const highlightRef = useRef<L.CircleMarker | null>(null);
@@ -66,6 +66,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   const gadmLayerRef = useRef<L.GeoJSON | null>(null);
   const [showHull, setShowHull] = useState(true);
   const hullLayerRef = useRef<L.GeoJSON | null>(null);
+  const suggestionsLayerRef = useRef<L.LayerGroup | null>(null);
 
   const geojson = toGeoJSON(records);
   const pointFeatures = geojson.features.filter((feature) => feature.geometry.type === "Point");
@@ -177,6 +178,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       mapRef.current = null;
       measureLayerRef.current = null;
       hullLayerRef.current = null;
+      suggestionsLayerRef.current = null;
     };
   }, [records]);
 
@@ -388,7 +390,51 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     };
   }, [georefMode, measuring, onGeorefClick]);
 
-  if (geojson.features.length === 0) {
+  // Render suggestion markers with uncertainty buffers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (suggestionsLayerRef.current) {
+      suggestionsLayerRef.current.clearLayers();
+    } else {
+      suggestionsLayerRef.current = L.layerGroup().addTo(map);
+    }
+
+    suggestions.forEach((s) => {
+      // Uncertainty buffer circle
+      if (s.coordinateUncertaintyInMeters && s.coordinateUncertaintyInMeters > 0) {
+        L.circle([s.decimalLatitude, s.decimalLongitude], {
+          radius: s.coordinateUncertaintyInMeters,
+          color: "hsl(200, 80%, 50%)",
+          weight: 1.5,
+          fillColor: "hsl(200, 80%, 60%)",
+          fillOpacity: 0.12,
+          dashArray: "5 3",
+        }).addTo(suggestionsLayerRef.current!);
+      }
+
+      // Point marker
+      L.circleMarker([s.decimalLatitude, s.decimalLongitude], {
+        radius: 7,
+        fillColor: "hsl(200, 80%, 50%)",
+        color: "hsl(0, 0%, 100%)",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.85,
+      })
+        .bindPopup(
+          `<div style="font-family:DM Sans,sans-serif;max-width:220px">
+            <strong style="color:hsl(200,80%,40%)">Suggested georef</strong><br/>
+            <span style="font-size:0.85em">${s.decimalLatitude.toFixed(5)}, ${s.decimalLongitude.toFixed(5)}</span>
+            ${s.coordinateUncertaintyInMeters ? `<br/><span style="font-size:0.85em">± ${s.coordinateUncertaintyInMeters}m</span>` : ""}
+          </div>`
+        )
+        .addTo(suggestionsLayerRef.current!);
+    });
+  }, [suggestions]);
+
+  if (geojson.features.length === 0 && suggestions.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 rounded-lg bg-muted">
         <p className="text-muted-foreground">No georeferenced records to display</p>
