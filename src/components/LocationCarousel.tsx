@@ -219,8 +219,8 @@ export default function LocationCarousel({
             panelOpen ? "w-[300px] mr-3" : "w-0"
           }`}
         >
-          <div className="w-[300px] h-full flex flex-col">
-            <ScrollArea className="flex-1">
+          <div className="w-[300px] h-full flex flex-col overflow-hidden">
+            <ScrollArea className="flex-1 h-0">
               <div className={`rounded-lg border px-2.5 py-2 space-y-1.5 text-xs ${
                 editMode ? "ring-2 ring-primary/40" : ""
               } ${
@@ -264,7 +264,7 @@ export default function LocationCarousel({
                       <span className="font-mono">{loc.date}</span>
                       {needsGeoref && <AlertTriangle className="w-3 h-3 text-destructive ml-auto flex-shrink-0" />}
                     </div>
-                    <span className="text-[11px] font-medium leading-tight">{loc.locality}</span>
+                    <span className="text-[11px] font-medium leading-tight line-clamp-2">{loc.locality}</span>
                   </div>
                 </div>
 
