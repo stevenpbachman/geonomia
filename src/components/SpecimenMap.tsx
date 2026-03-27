@@ -173,7 +173,14 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       topCenter.appendChild(geocoderEl);
     }
 
+    // ResizeObserver for CSS resize handle
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    resizeObserver.observe(containerRef.current!);
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
       measureLayerRef.current = null;
@@ -525,8 +532,8 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
 
       <div
         ref={containerRef}
-        className="rounded-lg overflow-hidden border shadow-sm"
-        style={{ height: 400 }}
+        className="rounded-lg overflow-hidden border shadow-sm resize-y"
+        style={{ height: 350, minHeight: 200, maxHeight: 700 }}
       />
     </div>
   );

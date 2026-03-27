@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { LocationSummary } from "@/lib/types";
+import { useEffect, useState, useMemo } from "react";
+import { LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,10 +7,20 @@ interface Props {
   summaries: LocationSummary[];
   onLocationSelect?: (summary: LocationSummary | null) => void;
   onGeoreferenceRequest?: (specimen: import("@/lib/types").SpecimenRecord) => void;
+  suggestions?: GeoreferenceSuggestion[];
 }
 
-export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest }: Props) {
+export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest, suggestions = [] }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Build a set of gbifIDs that have suggestions
+  const suggestedIds = useMemo(() => new Set(suggestions.map(s => s.gbifID)), [suggestions]);
+  // Map gbifID -> suggestion for coords
+  const suggestionMap = useMemo(() => {
+    const m = new Map<string, GeoreferenceSuggestion>();
+    suggestions.forEach(s => m.set(s.gbifID, s));
+    return m;
+  }, [suggestions]);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -24,11 +34,24 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
   const canPrev = currentIndex > 0;
   const canNext = currentIndex < summaries.length - 1;
   const isUngeoreferenced = loc.lat === null || loc.lon === null;
+  // Check if this ungeoref location has a suggestion
+  const hasSuggestion = isUngeoreferenced && loc.specimens.some(s => suggestedIds.has(s.gbifID));
 
   const goTo = (idx: number) => {
     setCurrentIndex(idx);
     const s = summaries[idx];
-    onLocationSelect?.(s?.lat !== null && s?.lon !== null ? s : null);
+    if (s?.lat !== null && s?.lon !== null) {
+      onLocationSelect?.(s);
+    } else {
+      // Check if there's a suggestion for any specimen at this location
+      const sugSpec = s?.specimens.find(sp => suggestionMap.has(sp.gbifID));
+      if (sugSpec) {
+        const sug = suggestionMap.get(sugSpec.gbifID)!;
+        onLocationSelect?.({ ...s, lat: sug.decimalLatitude, lon: sug.decimalLongitude });
+      } else {
+        onLocationSelect?.(null);
+      }
+    }
   };
 
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
@@ -54,6 +77,7 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
             {/* Stop dots */}
             {summaries.map((s, i) => {
               const isUngeoref = s.lat === null || s.lon === null;
+              const isSuggested = isUngeoref && s.specimens.some(sp => suggestedIds.has(sp.gbifID));
               const isCurrent = i === currentIndex;
               const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
               return (
@@ -62,7 +86,7 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
                   onClick={() => goTo(i)}
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1"
                   style={{ left: `${pct}%` }}
-                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? " (no coords)" : ""}`}
+                  title={`Stop ${i + 1}: ${s.locality}${isUngeoref ? (isSuggested ? " (suggested)" : " (no coords)") : ""}`}
                 >
                   <div
                     className={`rounded-full transition-all ${
@@ -70,7 +94,11 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
                         ? "w-3 h-3 ring-2 ring-primary ring-offset-1 ring-offset-background"
                         : "w-2 h-2"
                     } ${
-                      isUngeoref ? "bg-destructive" : "bg-primary"
+                      isUngeoref
+                        ? isSuggested
+                          ? "bg-blue-500"
+                          : "bg-destructive"
+                        : "bg-primary"
                     }`}
                   />
                 </button>
@@ -87,6 +115,12 @@ export default function LocationCarousel({ summaries, onLocationSelect, onGeoref
             <span className="inline-block w-2 h-2 rounded-full bg-primary" />
             Georeferenced
           </span>
+          {suggestions.length > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
+              Suggested
+            </span>
+          )}
           {ungeorefCount > 0 && (
             <span className="flex items-center gap-1">
               <span className="inline-block w-2 h-2 rounded-full bg-destructive" />

@@ -54,8 +54,17 @@ export default function Index() {
     setGeorefMode(false);
   }, []);
 
-  const handleGeorefSubmit = useCallback((suggestion: GeoreferenceSuggestion) => {
-    const updated = [...suggestions.filter(s => s.gbifID !== suggestion.gbifID), suggestion];
+  // Find all specimens at the same locality as the georef target
+  const georefLocalitySpecimens = useMemo(() => {
+    if (!georefSpecimen || !records) return [];
+    return records.filter(
+      (r) => r.locality === georefSpecimen.locality && (r.decimalLatitude === null || r.decimalLongitude === null)
+    );
+  }, [georefSpecimen, records]);
+
+  const handleGeorefSubmit = useCallback((newSuggestions: GeoreferenceSuggestion[]) => {
+    const ids = new Set(newSuggestions.map(s => s.gbifID));
+    const updated = [...suggestions.filter(s => !ids.has(s.gbifID)), ...newSuggestions];
     setSuggestions(updated);
     saveSuggestions(updated);
     setGeorefSpecimen(null);
@@ -179,9 +188,10 @@ export default function Index() {
               </p>
               <div className="flex gap-4">
                 {georefSpecimen && (
-                  <div className="w-80 flex-shrink-0 animate-in slide-in-from-left duration-300">
+                  <div className="flex-shrink-0 animate-in slide-in-from-left duration-300" style={{ width: 300 }}>
                     <GeoreferenceForm
                       specimen={georefSpecimen}
+                      localitySpecimens={georefLocalitySpecimens}
                       mapClickCoords={mapClickCoords}
                       onSubmit={handleGeorefSubmit}
                       onCancel={handleGeorefCancel}
@@ -212,6 +222,7 @@ export default function Index() {
                 summaries={locationSummaries}
                 onLocationSelect={setHighlightedLocation}
                 onGeoreferenceRequest={handleGeorefRequest}
+                suggestions={suggestions}
               />
             </section>
 
