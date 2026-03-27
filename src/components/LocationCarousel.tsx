@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { LocationSummary } from "@/lib/types";
+import { useEffect, useState, useMemo } from "react";
+import { LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { MapPin, Calendar, Leaf, ChevronLeft, ChevronRight, User, Hash, AlertTriangle, ExternalLink, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +7,7 @@ interface Props {
   summaries: LocationSummary[];
   onLocationSelect?: (summary: LocationSummary | null) => void;
   onGeoreferenceRequest?: (specimen: import("@/lib/types").SpecimenRecord) => void;
+  suggestions?: GeoreferenceSuggestion[];
 }
 
 export default function LocationCarousel({ summaries, onLocationSelect, onGeoreferenceRequest }: Props) {

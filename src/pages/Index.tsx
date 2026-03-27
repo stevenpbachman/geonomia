@@ -222,6 +222,7 @@ export default function Index() {
                 summaries={locationSummaries}
                 onLocationSelect={setHighlightedLocation}
                 onGeoreferenceRequest={handleGeorefRequest}
+                suggestions={suggestions}
               />
             </section>
 
