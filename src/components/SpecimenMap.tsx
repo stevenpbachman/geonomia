@@ -389,7 +389,49 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     };
   }, [georefMode, measuring, onGeorefClick]);
 
-  if (geojson.features.length === 0) {
+  // Render suggestion markers with uncertainty buffers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (suggestionsLayerRef.current) {
+      suggestionsLayerRef.current.clearLayers();
+    } else {
+      suggestionsLayerRef.current = L.layerGroup().addTo(map);
+    }
+
+    suggestions.forEach((s) => {
+      // Uncertainty buffer circle
+      if (s.coordinateUncertaintyInMeters && s.coordinateUncertaintyInMeters > 0) {
+        L.circle([s.decimalLatitude, s.decimalLongitude], {
+          radius: s.coordinateUncertaintyInMeters,
+          color: "hsl(200, 80%, 50%)",
+          weight: 1.5,
+          fillColor: "hsl(200, 80%, 60%)",
+          fillOpacity: 0.12,
+          dashArray: "5 3",
+        }).addTo(suggestionsLayerRef.current!);
+      }
+
+      // Point marker
+      L.circleMarker([s.decimalLatitude, s.decimalLongitude], {
+        radius: 7,
+        fillColor: "hsl(200, 80%, 50%)",
+        color: "hsl(0, 0%, 100%)",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.85,
+      })
+        .bindPopup(
+          `<div style="font-family:DM Sans,sans-serif;max-width:220px">
+            <strong style="color:hsl(200,80%,40%)">Suggested georef</strong><br/>
+            <span style="font-size:0.85em">${s.decimalLatitude.toFixed(5)}, ${s.decimalLongitude.toFixed(5)}</span>
+            ${s.coordinateUncertaintyInMeters ? `<br/><span style="font-size:0.85em">± ${s.coordinateUncertaintyInMeters}m</span>` : ""}
+          </div>`
+        )
+        .addTo(suggestionsLayerRef.current!);
+    });
+  }, [suggestions]);
     return (
       <div className="flex items-center justify-center h-64 rounded-lg bg-muted">
         <p className="text-muted-foreground">No georeferenced records to display</p>
