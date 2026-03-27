@@ -56,14 +56,27 @@ async function fetchBoundaryLevel(iso3: string, level: number): Promise<GeoJSONF
       cacheKey,
       (async () => {
         const meta = await fetchJSON<Record<string, any>>(`${GEO_BOUNDARIES_API}/${iso3}/ADM${level}/`);
-        const geometryUrl = meta?.simplifiedGeometryGeoJSON || meta?.gjDownloadURL;
+        let geometryUrl = meta?.simplifiedGeometryGeoJSON || meta?.gjDownloadURL;
         if (!geometryUrl) return null;
-        return fetchJSON<GeoJSONFeatureCollection>(geometryUrl);
+        // Convert github.com/raw URLs to raw.githubusercontent.com for CORS
+        geometryUrl = githubRawToRawGH(geometryUrl);
+        return fetchJSON<GeoJSONFeatureCollection>(geometryUrl, 30000);
       })()
     );
   }
 
   return adminLayerCache.get(cacheKey) ?? null;
+}
+
+/** Convert github.com/.../raw/... URLs to raw.githubusercontent.com for CORS compatibility */
+function githubRawToRawGH(url: string): string {
+  // https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/...
+  // → https://raw.githubusercontent.com/wmgeolab/geoBoundaries/9469f09/releaseData/...
+  const match = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/raw\/(.+)$/);
+  if (match) {
+    return `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}`;
+  }
+  return url;
 }
 
 function pointInRing(point: LatLngPoint, ring: [number, number][]): boolean {
