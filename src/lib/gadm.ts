@@ -185,7 +185,7 @@ export async function loadFinestGADM(
   let bestPartial: GADMResult | null = null;
   let bestMatchedPointCount = -1;
 
-  for (let level = maxLevel; level >= 1; level--) {
+  for (let level = maxLevel; level >= 0; level--) {
     const geojson = await fetchBoundaryLevel(iso3, level);
     if (!geojson?.features?.length) continue;
 
