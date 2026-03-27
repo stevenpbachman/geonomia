@@ -201,15 +201,15 @@ export default function LocationCarousel({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      {/* Top row: collapsible detail panel + map sits next to this in parent */}
-      <div className="flex gap-3 w-full">
+      {/* Top row: collapsible panel + map side by side */}
+      <div className="flex gap-3 w-full items-start">
         {/* Collapsible side panel */}
-        <Collapsible open={panelOpen} onOpenChange={setPanelOpen}>
+        <Collapsible open={panelOpen} onOpenChange={setPanelOpen} className="flex-shrink-0">
           <CollapsibleTrigger asChild>
             <Button
               variant={needsGeoref ? "destructive" : hasSuggestion ? "outline" : "outline"}
               size="sm"
-              className="gap-1.5 text-xs whitespace-nowrap"
+              className="gap-1.5 text-xs whitespace-nowrap w-full justify-start"
             >
               {panelOpen ? "▾" : "▸"}
               <span className="font-mono">{currentIndex + 1}/{summaries.length}</span>
@@ -278,6 +278,11 @@ export default function LocationCarousel({
             </ScrollArea>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* Map slot */}
+        <div className="flex-1 min-w-0">
+          {mapSlot}
+        </div>
       </div>
 
       {/* Horizontal scrubber below the map */}
