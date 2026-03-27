@@ -172,6 +172,66 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
     };
   }, [records]);
 
+  // Load GADM data when records change
+  useEffect(() => {
+    const points = geojson.features
+      .filter((f) => f.geometry.type === "Point")
+      .map((f) => f.geometry.coordinates as [number, number])
+      .map(([lng, lat]) => [lat, lng] as [number, number]);
+
+    if (points.length === 0) {
+      setGadmData(null);
+      return;
+    }
+
+    let cancelled = false;
+    setGadmLoading(true);
+    loadFinestGADM(points).then((result) => {
+      if (!cancelled) {
+        setGadmData(result);
+        setGadmLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) setGadmLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [records]);
+
+  // Toggle GADM layer on/off
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (gadmLayerRef.current) {
+      gadmLayerRef.current.remove();
+      gadmLayerRef.current = null;
+    }
+
+    if (showGADM && gadmData) {
+      const layer = L.geoJSON(gadmData.geojson, {
+        style: () => ({
+          color: "hsl(270, 50%, 55%)",
+          weight: 1.5,
+          fillColor: "hsl(270, 50%, 55%)",
+          fillOpacity: 0.04,
+          dashArray: "4 3",
+        }),
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          const name = p.NAME_4 || p.NAME_3 || p.NAME_2 || p.NAME_1 || p.NAME_0 || "Unknown";
+          const type = p.TYPE_4 || p.TYPE_3 || p.TYPE_2 || p.TYPE_1 || p.TYPE_0 || "";
+          layer.bindPopup(
+            `<div style="font-family:DM Sans,sans-serif">
+              <strong>${name}</strong>${type ? ` <span style="color:#888;font-size:0.85em">(${type})</span>` : ""}
+            </div>`
+          );
+        },
+      }).addTo(map);
+      gadmLayerRef.current = layer;
+    }
+  }, [showGADM, gadmData]);
+
   // Switch tile layer
   useEffect(() => {
     const map = mapRef.current;
