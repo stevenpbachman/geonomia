@@ -188,9 +188,10 @@ export default function Index() {
               </p>
               <div className="flex gap-4">
                 {georefSpecimen && (
-                  <div className="w-80 flex-shrink-0 animate-in slide-in-from-left duration-300">
+                  <div className="flex-shrink-0 animate-in slide-in-from-left duration-300" style={{ width: 300 }}>
                     <GeoreferenceForm
                       specimen={georefSpecimen}
+                      localitySpecimens={georefLocalitySpecimens}
                       mapClickCoords={mapClickCoords}
                       onSubmit={handleGeorefSubmit}
                       onCancel={handleGeorefCancel}
