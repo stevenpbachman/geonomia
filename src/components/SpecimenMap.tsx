@@ -5,8 +5,9 @@ import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import * as GeocoderModule from "leaflet-control-geocoder";
 import { SpecimenRecord, LocationSummary } from "@/lib/types";
 import { toGeoJSON } from "@/lib/analysis";
+import { loadFinestGADM, GADMResult } from "@/lib/gadm";
 import { Button } from "@/components/ui/button";
-import { Ruler, X, Crosshair } from "lucide-react";
+import { Ruler, X, Crosshair, Layers } from "lucide-react";
 
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
@@ -64,6 +65,10 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   const measureLayerRef = useRef<L.LayerGroup | null>(null);
   const measureHandlerRef = useRef<((e: L.LeafletMouseEvent) => void) | null>(null);
   const [measureDistance, setMeasureDistance] = useState<string | null>(null);
+  const [showGADM, setShowGADM] = useState(false);
+  const [gadmData, setGadmData] = useState<GADMResult | null>(null);
+  const [gadmLoading, setGadmLoading] = useState(false);
+  const gadmLayerRef = useRef<L.GeoJSON | null>(null);
 
   const geojson = toGeoJSON(records);
 
@@ -166,6 +171,66 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       measureLayerRef.current = null;
     };
   }, [records]);
+
+  // Load GADM data when records change
+  useEffect(() => {
+    const points = geojson.features
+      .filter((f) => f.geometry.type === "Point")
+      .map((f) => f.geometry.coordinates as [number, number])
+      .map(([lng, lat]) => [lat, lng] as [number, number]);
+
+    if (points.length === 0) {
+      setGadmData(null);
+      return;
+    }
+
+    let cancelled = false;
+    setGadmLoading(true);
+    loadFinestGADM(points).then((result) => {
+      if (!cancelled) {
+        setGadmData(result);
+        setGadmLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) setGadmLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [records]);
+
+  // Toggle GADM layer on/off
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (gadmLayerRef.current) {
+      gadmLayerRef.current.remove();
+      gadmLayerRef.current = null;
+    }
+
+    if (showGADM && gadmData) {
+      const layer = L.geoJSON(gadmData.geojson, {
+        style: () => ({
+          color: "hsl(270, 50%, 55%)",
+          weight: 1.5,
+          fillColor: "hsl(270, 50%, 55%)",
+          fillOpacity: 0.04,
+          dashArray: "4 3",
+        }),
+        onEachFeature: (feature, layer) => {
+          const p = feature.properties;
+          const name = p.NAME_4 || p.NAME_3 || p.NAME_2 || p.NAME_1 || p.NAME_0 || "Unknown";
+          const type = p.TYPE_4 || p.TYPE_3 || p.TYPE_2 || p.TYPE_1 || p.TYPE_0 || "";
+          layer.bindPopup(
+            `<div style="font-family:DM Sans,sans-serif">
+              <strong>${name}</strong>${type ? ` <span style="color:#888;font-size:0.85em">(${type})</span>` : ""}
+            </div>`
+          );
+        },
+      }).addTo(map);
+      gadmLayerRef.current = layer;
+    }
+  }, [showGADM, gadmData]);
 
   // Switch tile layer
   useEffect(() => {
@@ -315,6 +380,21 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
             {val.name}
           </button>
         ))}
+        {/* GADM admin boundaries toggle */}
+        <div className="mt-1 border-t border-border pt-1">
+          <button
+            onClick={() => setShowGADM(!showGADM)}
+            disabled={gadmLoading || !gadmData}
+            className={`px-2 py-1 text-xs rounded shadow-sm border transition-colors w-full flex items-center gap-1 ${
+              showGADM
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-card-foreground border-border hover:bg-accent"
+            } ${gadmLoading || !gadmData ? "opacity-50 cursor-wait" : ""}`}
+          >
+            <Layers className="w-3 h-3" />
+            {gadmLoading ? "Loading…" : gadmData ? `GADM L${gadmData.level}` : "No GADM"}
+          </button>
+        </div>
       </div>
 
       {/* Measure tool */}
