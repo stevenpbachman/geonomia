@@ -106,7 +106,7 @@ function InlineGeorefForm({
         <div className="flex gap-1.5 items-end mt-1.5">
           <div className="space-y-0.5 flex-1">
             <label className="text-[10px] font-medium text-muted-foreground">Uncertainty (m)</label>
-            <Input type="number" step="any" placeholder="1000" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-6 text-[11px]" />
+            <Input type="number" step="any" placeholder="" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-6 text-[11px]" />
           </div>
           <Button type="button" variant="outline" size="sm" className="h-6 gap-1 text-[10px] px-2" onClick={onRequestMapClick}>
             <Crosshair className="w-3 h-3" /> Map
@@ -219,8 +219,8 @@ export default function LocationCarousel({
             panelOpen ? "w-[300px] mr-3" : "w-0"
           }`}
         >
-          <div className="w-[300px] h-full">
-            <ScrollArea className="h-full max-h-[500px]">
+          <div className="w-[300px] h-full flex flex-col">
+            <ScrollArea className="flex-1">
               <div className={`rounded-lg border px-2.5 py-2 space-y-1.5 text-xs ${
                 editMode ? "ring-2 ring-primary/40" : ""
               } ${
@@ -268,9 +268,6 @@ export default function LocationCarousel({
                       <MapPin className="w-2.5 h-2.5 mt-0.5 flex-shrink-0 text-muted-foreground" />
                       <span className="text-[11px] font-medium leading-tight">{loc.locality}</span>
                     </div>
-                    {loc.lat !== null && loc.lon !== null && (
-                      <span className="text-[10px] font-mono text-muted-foreground ml-3.5">{loc.lat.toFixed(4)}°, {loc.lon.toFixed(4)}°</span>
-                    )}
                   </div>
                 </div>
 
