@@ -450,7 +450,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
   }
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {/* Layer switcher */}
       <div className="absolute top-2 right-2 z-[1000] flex flex-col gap-1">
         {Object.entries(TILE_LAYERS).map(([key, val]) => (

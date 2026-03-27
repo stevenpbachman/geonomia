@@ -212,7 +212,7 @@ export default function LocationCarousel({
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* Top row: sliding panel + map side by side */}
-      <div className="flex w-full items-stretch" style={{ minHeight: 500 }}>
+      <div className="flex h-[500px] w-full items-stretch">
         {/* Side panel - slides left-to-right */}
         <div
           className={`overflow-hidden transition-all duration-300 ease-in-out flex-shrink-0 ${
@@ -311,7 +311,7 @@ export default function LocationCarousel({
         </div>
 
         {/* Map + panel reopen button */}
-        <div className="flex-1 min-w-0 relative">
+        <div className="relative flex-1 min-w-0 h-full">
           {mapSlot}
           {!panelOpen && (
             <div className="absolute top-2 left-2 z-[1000]">
