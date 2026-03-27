@@ -264,25 +264,15 @@ export default function LocationCarousel({
                   <span className="truncate">{loc.specimens[0]?.recordedBy}</span>
 
                   <span className="text-muted-foreground font-medium">Number</span>
-                  <span className="font-mono font-semibold">
-                    {loc.specimens.map(s => s.recordNumber).join(", ")}
-                  </span>
+                  <span className="font-mono font-semibold">{loc.specimens[0]?.recordNumber}</span>
 
                   <span className="text-muted-foreground font-medium">Species</span>
                   <em className="truncate">{loc.specimens[0]?.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                 </div>
 
-                {/* Locality - fixed height, scrollable */}
-                <div className="mt-1.5 space-y-0.5">
-                  <span className="text-[10px] text-muted-foreground font-medium">Locality</span>
-                  <div className="h-[32px] overflow-y-auto text-[11px] leading-tight border rounded px-1.5 py-1 bg-background">
-                    {loc.locality}
-                  </div>
-                </div>
-
-                {/* Specimen tabs for multiple - species per specimen */}
+                {/* Multiple specimen tabs - shown under Number as shaded pills */}
                 {loc.specimens.length > 1 && (
-                  <Tabs defaultValue="0" className="w-full mt-1.5">
+                  <Tabs defaultValue="0" className="w-full mt-1">
                     <TabsList className="h-6 p-0.5 w-full">
                       {loc.specimens.map((s, i) => (
                         <TabsTrigger key={s.gbifID} value={String(i)} className="text-[10px] px-1.5 py-0 h-5 flex-1">
@@ -292,13 +282,22 @@ export default function LocationCarousel({
                     </TabsList>
                     {loc.specimens.map((s, i) => (
                       <TabsContent key={s.gbifID} value={String(i)} className="mt-1">
-                        <div className="text-[11px]">
+                        <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
+                          <span className="text-muted-foreground font-medium">Species</span>
                           <em className="truncate">{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
                         </div>
                       </TabsContent>
                     ))}
                   </Tabs>
                 )}
+
+                {/* Locality - fixed height, scrollable */}
+                <div className="mt-1.5 space-y-0.5">
+                  <span className="text-[10px] text-muted-foreground font-medium">Locality</span>
+                  <div className="h-[32px] overflow-y-auto text-[11px] leading-tight border rounded px-1.5 py-1 bg-background">
+                    {loc.locality}
+                  </div>
+                </div>
 
                 {/* Georef form - always shown */}
                 <div className="mt-auto pt-1.5">
