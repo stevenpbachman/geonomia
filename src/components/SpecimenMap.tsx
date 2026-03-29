@@ -313,7 +313,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
         }
       ).addTo(map);
       highlightRef.current = marker;
-      map.panTo([highlightedLocation.lat, highlightedLocation.lon], { animate: true });
+      map.setView([highlightedLocation.lat, highlightedLocation.lon], Math.max(map.getZoom(), 12), { animate: true });
     }
   }, [highlightedLocation]);
 
