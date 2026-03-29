@@ -91,7 +91,7 @@ function InlineGeorefForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-1.5 pt-2 mt-2">
+    <form onSubmit={handleSubmit} className="space-y-1.5 mt-1">
       <fieldset disabled={disabled}>
         <div className="grid grid-cols-2 gap-1.5">
           <div className="space-y-0.5">
@@ -276,7 +276,7 @@ export default function LocationCarousel({
                   <span className="font-mono">{loc.date}</span>
 
                   <span className="text-muted-foreground font-medium">Collector</span>
-                  <span className="overflow-x-auto whitespace-nowrap scrollbar-thin">{loc.specimens[0]?.recordedBy}</span>
+                  <span className="line-clamp-2 break-words" title={loc.specimens[0]?.recordedBy}>{loc.specimens[0]?.recordedBy}</span>
 
                 </div>
 
@@ -306,7 +306,7 @@ export default function LocationCarousel({
                 </Tabs>
 
                 {/* Locality - fixed height, scrollable */}
-                <div className="mt-1.5 space-y-0.5">
+                <div className="mt-1 space-y-0.5">
                   <span className="text-[10px] text-muted-foreground font-medium">Locality</span>
                   <div className="h-[32px] overflow-y-auto text-[11px] leading-tight border rounded px-1.5 py-1 bg-background">
                     {loc.locality}
@@ -314,7 +314,7 @@ export default function LocationCarousel({
                 </div>
 
                 {/* Georef form - always shown */}
-                <div className="mt-auto pt-1.5">
+                <div className="mt-auto pt-0.5">
                   <InlineGeorefForm
                     specimens={loc.specimens}
                     mapClickCoords={mapClickCoords}
