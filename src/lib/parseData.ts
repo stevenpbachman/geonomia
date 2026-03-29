@@ -25,6 +25,7 @@ export function parseTSV(text: string): SpecimenRecord[] {
       decimalLongitude: isNaN(lon) ? null : lon,
       decimalLatitude: isNaN(lat) ? null : lat,
       locality: row.locality || "",
+      verbatimElevation: row.verbatimElevation || row.minimumElevationInMeters || null,
     });
   }
 
@@ -76,6 +77,7 @@ export function parseCSV(text: string): SpecimenRecord[] {
       decimalLongitude: isNaN(lon) ? null : lon,
       decimalLatitude: isNaN(lat) ? null : lat,
       locality: row.locality || "",
+      verbatimElevation: row.verbatimElevation || row.minimumElevationInMeters || null,
     });
   }
 
