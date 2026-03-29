@@ -23,6 +23,7 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: -42.7,
     decimalLatitude: -5.333333,
     locality: "Rod. Br 316, 1 Km from Dermeval Lobao in direction of Teresina.",
+    verbatimElevation: null,
   },
   {
     gbifID: "912112914",
@@ -34,6 +35,7 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: -41.33333,
     decimalLatitude: -7.416667,
     locality: "7km along trackway to Lagoa Achada, start of trackway is 9km south of Jaicós along the BR 407 to Petrolina.",
+    verbatimElevation: null,
   },
   {
     gbifID: "912114216",
@@ -45,6 +47,7 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: -41.66667,
     decimalLatitude: -6.5,
     locality: "24km from Valença to Lagão do Sítio. By farmstead.",
+    verbatimElevation: null,
   },
   {
     gbifID: "1051235998",
@@ -56,6 +59,7 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: -49.75,
     decimalLatitude: -25.5,
     locality: "Rod. BR 376 Curitiba to Ponta Grossa. Serra São Luiz.",
+    verbatimElevation: null,
   },
   {
     gbifID: "5103935637",
@@ -67,5 +71,6 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: -48.66667,
     decimalLatitude: -25.5,
     locality: "Reserva Biológica Sapitanduva, near Morretes; Mata",
+    verbatimElevation: null,
   },
 ];
