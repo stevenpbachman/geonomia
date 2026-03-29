@@ -8,6 +8,7 @@ export interface SpecimenRecord {
   decimalLongitude: number | null;
   decimalLatitude: number | null;
   locality: string;
+  verbatimElevation: string | null;
 }
 
 export interface LocationSummary {

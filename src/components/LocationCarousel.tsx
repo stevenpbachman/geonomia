@@ -93,24 +93,28 @@ function InlineGeorefForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-1.5 mt-1">
       <fieldset disabled={disabled}>
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="space-y-0.5">
+        <div className="flex gap-1.5 items-end">
+          <div className="space-y-0.5 flex-1">
             <label className="text-[10px] font-medium text-muted-foreground">Lat</label>
             <Input type="number" step="any" placeholder="" value={lat} onChange={(e) => setLat(e.target.value)} className="h-6 text-[11px] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]" />
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 flex-1">
             <label className="text-[10px] font-medium text-muted-foreground">Lng</label>
             <Input type="number" step="any" placeholder="" value={lng} onChange={(e) => setLng(e.target.value)} className="h-6 text-[11px] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]" />
           </div>
+          <Button type="button" variant="outline" size="sm" className="h-6 gap-1 text-[10px] px-2 flex-shrink-0" onClick={onRequestMapClick}>
+            <Crosshair className="w-3 h-3" /> Map
+          </Button>
         </div>
         <div className="flex gap-1.5 items-end mt-1.5">
           <div className="space-y-0.5 flex-1">
             <label className="text-[10px] font-medium text-muted-foreground">Uncertainty (m)</label>
             <Input type="number" step="any" placeholder="" value={uncertainty} onChange={(e) => setUncertainty(e.target.value)} className="h-6 text-[11px] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]" />
           </div>
-          <Button type="button" variant="outline" size="sm" className="h-6 gap-1 text-[10px] px-2" onClick={onRequestMapClick}>
-            <Crosshair className="w-3 h-3" /> Map
-          </Button>
+          <div className="space-y-0.5 w-[80px] flex-shrink-0">
+            <label className="text-[10px] font-medium text-muted-foreground">Elev. (m)</label>
+            <Input type="text" readOnly value={specimens[0]?.verbatimElevation ?? "—"} className="h-6 text-[11px] bg-muted/50" />
+          </div>
         </div>
         <div className="space-y-0.5 mt-1.5">
           <label className="text-[10px] font-medium text-muted-foreground">Remarks</label>
@@ -276,7 +280,7 @@ export default function LocationCarousel({
                   <span className="font-mono">{loc.date}</span>
 
                   <span className="text-muted-foreground font-medium">Collector</span>
-                  <span className="line-clamp-2 break-words" title={loc.specimens[0]?.recordedBy}>{loc.specimens[0]?.recordedBy}</span>
+                  <span className="truncate" title={loc.specimens[0]?.recordedBy}>{loc.specimens[0]?.recordedBy}</span>
 
                 </div>
 
