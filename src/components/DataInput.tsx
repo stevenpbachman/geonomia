@@ -34,22 +34,23 @@ export default function DataInput({ onDataLoaded }: Props) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">
-          Paste CSV/TSV data or upload a file
-        </label>
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={`gbifID\tscientificName\teventDate\trecordNumber\trecordedBy\tcluster_num_id\tdecimalLongitude\tdecimalLatitude\tlocality\n912048762\tDimorphandra gardneriana\t1985-01-09\t1349\tLewis, G.P.\t7896\tNA\tNA\tPiaui`}
-          className="font-mono text-xs min-h-[120px] resize-y"
-        />
-      </div>
       <div className="flex gap-3">
-        <Button onClick={handleParse} className="gap-2">
-          <FileText className="w-4 h-4" />
-          Parse data
-        </Button>
+        {/* Parse data option kept but hidden for now */}
+        {/* <div>
+          <label className="text-sm font-medium mb-1.5 block">
+            Paste CSV/TSV data
+          </label>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={`gbifID\tscientificName\teventDate\t...`}
+            className="font-mono text-xs min-h-[120px] resize-y"
+          />
+          <Button onClick={handleParse} className="gap-2 mt-2">
+            <FileText className="w-4 h-4" />
+            Parse data
+          </Button>
+        </div> */}
         <label>
           <input type="file" accept=".csv,.tsv,.txt" onChange={handleFile} className="hidden" />
           <Button variant="outline" className="gap-2 cursor-pointer" asChild>
