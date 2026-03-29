@@ -11,6 +11,7 @@ export const sampleData: SpecimenRecord[] = [
     decimalLongitude: null,
     decimalLatitude: null,
     locality: "Piaui",
+    verbatimElevation: null,
   },
   {
     gbifID: "912091237",

@@ -55,6 +55,7 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         decimalLongitude: r.decimalLongitude ?? r.decimal_longitude ?? null,
         decimalLatitude: r.decimalLatitude ?? r.decimal_latitude ?? null,
         locality: r.locality ?? "",
+        verbatimElevation: r.verbatimElevation ?? r.verbatim_elevation ?? r.minimumElevationInMeters ?? r.minimum_elevation_in_meters ?? null,
       }));
       if (records.length === 0) {
         setError("No occurrences found for this cluster.");
