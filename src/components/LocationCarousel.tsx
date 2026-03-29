@@ -91,7 +91,7 @@ function InlineGeorefForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-1.5 pt-2 border-t border-border mt-2">
+    <form onSubmit={handleSubmit} className="space-y-1.5 pt-2 mt-2">
       <fieldset disabled={disabled}>
         <div className="grid grid-cols-2 gap-1.5">
           <div className="space-y-0.5">
@@ -276,7 +276,7 @@ export default function LocationCarousel({
                   <span className="font-mono">{loc.date}</span>
 
                   <span className="text-muted-foreground font-medium">Collector</span>
-                  <span className="truncate">{loc.specimens[0]?.recordedBy}</span>
+                  <span className="overflow-x-auto whitespace-nowrap scrollbar-thin">{loc.specimens[0]?.recordedBy}</span>
 
                 </div>
 
@@ -292,14 +292,17 @@ export default function LocationCarousel({
                       ))}
                     </TabsList>
                   </div>
-                  {loc.specimens.map((s, i) => (
-                    <TabsContent key={s.gbifID} value={String(i)} className="mt-0.5">
-                      <div className="text-[11px]">
-                        <span className="text-muted-foreground font-medium mr-2">Species</span>
-                        <em className="truncate">{s.scientificName.split(" ").slice(0, 2).join(" ")}</em>
-                      </div>
-                    </TabsContent>
-                  ))}
+                  {loc.specimens.map((s, i) => {
+                    const species = s.scientificName?.trim() ? s.scientificName.split(" ").slice(0, 2).join(" ") : "—";
+                    return (
+                      <TabsContent key={s.gbifID} value={String(i)} className="mt-0.5 min-h-[18px]">
+                        <div className="text-[11px]">
+                          <span className="text-muted-foreground font-medium mr-2">Species</span>
+                          <em className="truncate">{species}</em>
+                        </div>
+                      </TabsContent>
+                    );
+                  })}
                 </Tabs>
 
                 {/* Locality - fixed height, scrollable */}
