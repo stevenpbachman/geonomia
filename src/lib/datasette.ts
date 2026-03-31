@@ -38,14 +38,8 @@ export async function searchClusters({
   const where = conditions.join(" and ");
   const sql = `select cluster_num_id, recordedBy_first_family, eventDate_min, eventDate_max from cluster where ${where} order by eventDate_min limit 200`;
 
-  const url = new URL(`${DATASETTE_BASE}/${DB}.json`);
-  url.searchParams.set("sql", sql);
-  url.searchParams.set("_shape", "array");
-  for (const [k, v] of Object.entries(params)) {
-    url.searchParams.set(k, v);
-  }
-
-  const res = await fetch(url.toString());
+  const qs = new URLSearchParams({ sql, _shape: "array", ...params });
+  const res = await fetch(`${DATASETTE_BASE}/${DB}.json?${qs}`);
   if (!res.ok) throw new Error(`Datasette error: ${res.status}`);
   return await res.json();
 }
@@ -54,12 +48,8 @@ export async function fetchClusterOccurrences(
   clusterNumId: string
 ): Promise<Record<string, unknown>[]> {
   const sql = `select * from occ where cluster_num_id = :cid order by eventDate, recordNumber`;
-  const url = new URL(`${DATASETTE_BASE}/${DB}.json`);
-  url.searchParams.set("sql", sql);
-  url.searchParams.set("_shape", "array");
-  url.searchParams.set("cid", clusterNumId);
-
-  const res = await fetch(url.toString());
+  const qs = new URLSearchParams({ sql, _shape: "array", cid: clusterNumId });
+  const res = await fetch(`${DATASETTE_BASE}/${DB}.json?${qs}`);
   if (!res.ok) throw new Error(`Datasette error: ${res.status}`);
   return await res.json();
 }
