@@ -52,8 +52,8 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         recordNumber: String(r.recordNumber ?? r.record_number ?? ""),
         recordedBy: r.recordedBy ?? r.recorded_by ?? "",
         cluster_num_id: String(r.cluster_num_id ?? ""),
-        decimalLongitude: r.decimalLongitude ?? r.decimal_longitude ?? null,
-        decimalLatitude: r.decimalLatitude ?? r.decimal_latitude ?? null,
+        decimalLongitude: r.decimalLongitude !== "" && r.decimalLongitude != null ? Number(r.decimalLongitude) : null,
+        decimalLatitude: r.decimalLatitude !== "" && r.decimalLatitude != null ? Number(r.decimalLatitude) : null,
         locality: r.locality ?? "",
         verbatimElevation: r.verbatimElevation ?? r.verbatim_elevation ?? r.minimumElevationInMeters ?? r.minimum_elevation_in_meters ?? null,
       }));
