@@ -13,8 +13,9 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/datasette": {
-        target: "http://10.152.129.252:8001",
+        target: "https://friendly-spork-7pxqjrpxq72xr5p-8001.app.github.dev",
         changeOrigin: true,
+        secure: true,
         rewrite: (path) => path.replace(/^\/datasette/, ""),
       },
     },
