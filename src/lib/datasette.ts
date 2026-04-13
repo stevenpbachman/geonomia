@@ -10,16 +10,21 @@ export interface ClusterResult {
   eventDate_max: string;
   cluster_num_id_count: number;
   eventDate_unique_count: number;
+  georef_completeness: number;
 }
 
 export async function searchClusters({
   collector,
   yearStart,
   yearEnd,
+  georefMin,
+  georefMax,
 }: {
   collector?: string;
   yearStart?: number;
   yearEnd?: number;
+  georefMin?: number;
+  georefMax?: number;
 }): Promise<ClusterResult[]> {
   const conditions: string[] = [];
   const params: Record<string, string> = {};
@@ -36,11 +41,19 @@ export async function searchClusters({
     conditions.push("eventDate_max <= :dateEnd");
     params.dateEnd = `${yearEnd}-12-31`;
   }
+  if (georefMin !== undefined) {
+    conditions.push("georef_completeness >= :georefMin");
+    params.georefMin = String(georefMin);
+  }
+  if (georefMax !== undefined) {
+    conditions.push("georef_completeness <= :georefMax");
+    params.georefMax = String(georefMax);
+  }
 
   if (conditions.length === 0) return [];
 
   const where = conditions.join(" and ");
-  const sql = `select cluster_num_id, recordedBy_first_family, eventDate_min, eventDate_max, cluster_num_id_count, eventDate_unique_count from cluster where ${where} order by eventDate_min limit 200`;
+  const sql = `select cluster_num_id, recordedBy_first_family, eventDate_min, eventDate_max, cluster_num_id_count, eventDate_unique_count, georef_completeness from cluster where ${where} order by eventDate_min limit 200`;
 
   const qs = new URLSearchParams({ sql, _shape: "array", ...params });
   const res = await fetch(`${DATASETTE_BASE}/${DB}.json?${qs}`);
