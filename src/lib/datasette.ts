@@ -49,7 +49,7 @@ export async function searchClusters({
 export async function fetchClusterOccurrences(
   clusterNumId: string
 ): Promise<Record<string, unknown>[]> {
-  const sql = `select * from occ where cluster_num_id = :cid order by eventDate, record_number`;
+  const sql = `select * from occ where cluster_num_id = :cid`;
   const qs = new URLSearchParams({ sql, _shape: "array", cid: clusterNumId });
   const res = await fetch(`${DATASETTE_BASE}/${DB}.json?${qs}`);
   if (!res.ok) throw new Error(`Datasette error: ${res.status}`);
