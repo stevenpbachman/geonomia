@@ -20,8 +20,6 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
   const [collector, setCollector] = useState("");
   const [yearStart, setYearStart] = useState("");
   const [yearEnd, setYearEnd] = useState("");
-  const [georefMin, setGeorefMin] = useState("");
-  const [georefMax, setGeorefMax] = useState("");
   const [results, setResults] = useState<ClusterResult[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -37,8 +35,6 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         collector: collector || undefined,
         yearStart: yearStart ? parseInt(yearStart) : undefined,
         yearEnd: yearEnd ? parseInt(yearEnd) : undefined,
-        georefMin: georefMin !== "" ? parseFloat(georefMin) : undefined,
-        georefMax: georefMax !== "" ? parseFloat(georefMax) : undefined,
       });
       setResults(data);
       if (data.length === 0) setError("No clusters found for this search.");
@@ -161,34 +157,6 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
               value={yearEnd}
               onChange={(e) => setYearEnd(e.target.value)}
               placeholder="1990"
-            />
-          </div>
-          <div className="w-24">
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Georef min
-            </label>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="1"
-              value={georefMin}
-              onChange={(e) => setGeorefMin(e.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div className="w-24">
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Georef max
-            </label>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              max="1"
-              value={georefMax}
-              onChange={(e) => setGeorefMax(e.target.value)}
-              placeholder="1"
             />
           </div>
           <Button onClick={handleSearch} disabled={searching} className="gap-2">
