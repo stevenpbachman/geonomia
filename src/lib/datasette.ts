@@ -8,6 +8,8 @@ export interface ClusterResult {
   recordedBy_first_family: string;
   eventDate_min: string;
   eventDate_max: string;
+  cluster_num_id_count: number;
+  eventDate_unique_count: number;
 }
 
 export async function searchClusters({
