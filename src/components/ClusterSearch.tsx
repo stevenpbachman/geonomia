@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SpecimenRecord } from "@/lib/types";
@@ -7,11 +7,14 @@ import {
   searchClusters,
   fetchClusterOccurrences,
 } from "@/lib/datasette";
-import { Search, Loader2, ChevronRight } from "lucide-react";
+import { Search, Loader2, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 
 interface Props {
   onDataLoaded: (records: SpecimenRecord[]) => void;
 }
+
+type SortColumn = "eventDate_min" | "cluster_num_id" | "cluster_num_id_count" | "eventDate_unique_count";
+type SortDirection = "asc" | "desc";
 
 export default function ClusterSearch({ onDataLoaded }: Props) {
   const [collector, setCollector] = useState("");
@@ -21,6 +24,8 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("eventDate_min");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const handleSearch = async () => {
     setError(null);
@@ -72,6 +77,45 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
   const formatDate = (d: string) => {
     if (!d) return "—";
     return d.split("T")[0];
+  };
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection(prev => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortColumn(col);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedResults = useMemo(() => {
+    if (!results) return null;
+    const sorted = [...results].sort((a, b) => {
+      let cmp = 0;
+      switch (sortColumn) {
+        case "eventDate_min":
+          cmp = (a.eventDate_min || "").localeCompare(b.eventDate_min || "");
+          break;
+        case "cluster_num_id":
+          cmp = Number(a.cluster_num_id) - Number(b.cluster_num_id);
+          break;
+        case "cluster_num_id_count":
+          cmp = (a.cluster_num_id_count ?? 0) - (b.cluster_num_id_count ?? 0);
+          break;
+        case "eventDate_unique_count":
+          cmp = (a.eventDate_unique_count ?? 0) - (b.eventDate_unique_count ?? 0);
+          break;
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [results, sortColumn, sortDirection]);
+
+  const SortIcon = ({ col }: { col: SortColumn }) => {
+    if (sortColumn !== col) return null;
+    return sortDirection === "asc"
+      ? <ArrowUp className="w-3 h-3 inline ml-1" />
+      : <ArrowDown className="w-3 h-3 inline ml-1" />;
   };
 
   return (
@@ -127,20 +171,42 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         <p className="text-sm text-destructive">{error}</p>
       )}
 
-      {results && results.length > 0 && (
+      {sortedResults && sortedResults.length > 0 && (
         <div className="border rounded-md overflow-hidden">
           <div className="max-h-[280px] overflow-y-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 sticky top-0">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium">Collector</th>
-                  <th className="text-left px-3 py-2 font-medium">Date range</th>
-                  <th className="text-left px-3 py-2 font-medium">Cluster</th>
+                  <th
+                    className="text-left px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("eventDate_min")}
+                  >
+                    Date range<SortIcon col="eventDate_min" />
+                  </th>
+                  <th
+                    className="text-left px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("cluster_num_id")}
+                  >
+                    Cluster<SortIcon col="cluster_num_id" />
+                  </th>
+                  <th
+                    className="text-right px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("cluster_num_id_count")}
+                  >
+                    Records<SortIcon col="cluster_num_id_count" />
+                  </th>
+                  <th
+                    className="text-right px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("eventDate_unique_count")}
+                  >
+                    Dates<SortIcon col="eventDate_unique_count" />
+                  </th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody>
-                {results.map((c) => (
+                {sortedResults.map((c) => (
                   <tr
                     key={c.cluster_num_id}
                     className="border-t hover:bg-muted/30 cursor-pointer transition-colors"
@@ -156,6 +222,12 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
                     <td className="px-3 py-2 text-muted-foreground">
                       #{c.cluster_num_id}
                     </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {c.cluster_num_id_count}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {c.eventDate_unique_count}
+                    </td>
                     <td className="px-3 py-2">
                       {loading === c.cluster_num_id ? (
                         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -168,7 +240,7 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
               </tbody>
             </table>
           </div>
-          {results.length === 200 && (
+          {sortedResults.length === 200 && (
             <p className="text-xs text-muted-foreground px-3 py-2 border-t bg-muted/30">
               Showing first 200 results — refine your search for more specific results.
             </p>

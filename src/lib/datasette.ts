@@ -8,6 +8,8 @@ export interface ClusterResult {
   recordedBy_first_family: string;
   eventDate_min: string;
   eventDate_max: string;
+  cluster_num_id_count: number;
+  eventDate_unique_count: number;
 }
 
 export async function searchClusters({
@@ -38,7 +40,7 @@ export async function searchClusters({
   if (conditions.length === 0) return [];
 
   const where = conditions.join(" and ");
-  const sql = `select cluster_num_id, recordedBy_first_family, eventDate_min, eventDate_max from cluster where ${where} order by eventDate_min limit 200`;
+  const sql = `select cluster_num_id, recordedBy_first_family, eventDate_min, eventDate_max, cluster_num_id_count, eventDate_unique_count from cluster where ${where} order by eventDate_min limit 200`;
 
   const qs = new URLSearchParams({ sql, _shape: "array", ...params });
   const res = await fetch(`${DATASETTE_BASE}/${DB}.json?${qs}`);
