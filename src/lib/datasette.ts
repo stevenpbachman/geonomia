@@ -1,4 +1,6 @@
-const DATASETTE_BASE = "/datasette";
+const DATASETTE_BASE = import.meta.env.DEV
+  ? "/datasette"
+  : "https://nickynicolson-geonomia-my.hf.space";
 const DB = "geonomia";
 
 export interface ClusterResult {
