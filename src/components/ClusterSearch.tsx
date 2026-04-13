@@ -13,13 +13,15 @@ interface Props {
   onDataLoaded: (records: SpecimenRecord[]) => void;
 }
 
-type SortColumn = "eventDate_min" | "cluster_num_id" | "cluster_num_id_count" | "eventDate_unique_count";
+type SortColumn = "eventDate_min" | "cluster_num_id" | "cluster_num_id_count" | "eventDate_unique_count" | "georef_completeness";
 type SortDirection = "asc" | "desc";
 
 export default function ClusterSearch({ onDataLoaded }: Props) {
   const [collector, setCollector] = useState("");
   const [yearStart, setYearStart] = useState("");
   const [yearEnd, setYearEnd] = useState("");
+  const [georefMin, setGeorefMin] = useState("");
+  const [georefMax, setGeorefMax] = useState("");
   const [results, setResults] = useState<ClusterResult[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -35,6 +37,8 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         collector: collector || undefined,
         yearStart: yearStart ? parseInt(yearStart) : undefined,
         yearEnd: yearEnd ? parseInt(yearEnd) : undefined,
+        georefMin: georefMin !== "" ? parseFloat(georefMin) : undefined,
+        georefMax: georefMax !== "" ? parseFloat(georefMax) : undefined,
       });
       setResults(data);
       if (data.length === 0) setError("No clusters found for this search.");
@@ -105,6 +109,9 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         case "eventDate_unique_count":
           cmp = (a.eventDate_unique_count ?? 0) - (b.eventDate_unique_count ?? 0);
           break;
+        case "georef_completeness":
+          cmp = (a.georef_completeness ?? 0) - (b.georef_completeness ?? 0);
+          break;
       }
       return sortDirection === "asc" ? cmp : -cmp;
     });
@@ -156,6 +163,34 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
               placeholder="1990"
             />
           </div>
+          <div className="w-24">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Georef min
+            </label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={georefMin}
+              onChange={(e) => setGeorefMin(e.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div className="w-24">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Georef max
+            </label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={georefMax}
+              onChange={(e) => setGeorefMax(e.target.value)}
+              placeholder="1"
+            />
+          </div>
           <Button onClick={handleSearch} disabled={searching} className="gap-2">
             {searching ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -202,6 +237,12 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
                   >
                     Dates<SortIcon col="eventDate_unique_count" />
                   </th>
+                  <th
+                    className="text-right px-3 py-2 font-medium cursor-pointer select-none hover:text-foreground"
+                    onClick={() => handleSort("georef_completeness")}
+                  >
+                    Georef<SortIcon col="georef_completeness" />
+                  </th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
@@ -227,6 +268,9 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {c.eventDate_unique_count}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {Math.round((c.georef_completeness ?? 0) * 100)}%
                     </td>
                     <td className="px-3 py-2">
                       {loading === c.cluster_num_id ? (
