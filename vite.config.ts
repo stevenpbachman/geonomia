@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/datasette": {
-        target: "https://friendly-spork-7pxqjrpxq72xr5p-8001.app.github.dev",
+        target: "https://nickynicolson-geonomia-my.hf.space",
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/datasette/, ""),
