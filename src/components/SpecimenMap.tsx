@@ -129,7 +129,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       pointToLayer: (_feature, latlng) =>
         L.circleMarker(latlng, {
           radius: 7,
-          fillColor: "hsl(152, 35%, 32%)",
+          fillColor: "hsl(202, 100%, 35%)",
           color: "hsl(40, 15%, 99%)",
           weight: 2,
           opacity: 1,
@@ -140,8 +140,8 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
           const p = feature.properties;
           layer.bindPopup(
             `<div style="font-family:DM Sans,sans-serif;max-width:260px">
-              <strong style="color:hsl(152,35%,32%)">${p.scientificName}</strong><br/>
-              <span style="color:hsl(150,10%,45%);font-size:0.85em">${p.eventDate} · #${p.recordNumber}</span><br/>
+              <strong style="color:hsl(202,100%,30%)">${p.scientificName}</strong><br/>
+              <span style="color:hsl(200,10%,45%);font-size:0.85em">${p.eventDate} · #${p.recordNumber}</span><br/>
               <span style="font-size:0.85em">${p.locality}</span>
             </div>`
           );
@@ -343,15 +343,15 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
 
       L.circleMarker(e.latlng, {
         radius: 5,
-        fillColor: "hsl(200, 80%, 50%)",
-        color: "hsl(200, 80%, 30%)",
+        fillColor: "hsl(60, 5%, 25%)",
+        color: "hsl(60, 5%, 15%)",
         weight: 2,
         fillOpacity: 1,
       }).addTo(measureLayerRef.current!);
 
       if (pts.length > 1) {
         L.polyline([pts[pts.length - 2], pts[pts.length - 1]], {
-          color: "hsl(200, 80%, 50%)",
+          color: "hsl(60, 5%, 25%)",
           weight: 3,
           dashArray: "8 4",
         }).addTo(measureLayerRef.current!);
@@ -413,9 +413,9 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       if (s.coordinateUncertaintyInMeters && s.coordinateUncertaintyInMeters > 0) {
         L.circle([s.decimalLatitude, s.decimalLongitude], {
           radius: s.coordinateUncertaintyInMeters,
-          color: "hsl(200, 80%, 50%)",
+          color: "hsl(15, 90%, 50%)",
           weight: 1.5,
-          fillColor: "hsl(200, 80%, 60%)",
+          fillColor: "hsl(15, 90%, 60%)",
           fillOpacity: 0.12,
           dashArray: "5 3",
         }).addTo(suggestionsLayerRef.current!);
@@ -424,7 +424,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       // Point marker
       L.circleMarker([s.decimalLatitude, s.decimalLongitude], {
         radius: 7,
-        fillColor: "hsl(200, 80%, 50%)",
+        fillColor: "hsl(15, 90%, 50%)",
         color: "hsl(0, 0%, 100%)",
         weight: 2,
         opacity: 1,
@@ -432,7 +432,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       })
         .bindPopup(
           `<div style="font-family:DM Sans,sans-serif;max-width:220px">
-            <strong style="color:hsl(200,80%,40%)">Suggested georef</strong><br/>
+            <strong style="color:hsl(15,90%,40%)">Suggested georef</strong><br/>
             <span style="font-size:0.85em">${s.decimalLatitude.toFixed(5)}, ${s.decimalLongitude.toFixed(5)}</span>
             ${s.coordinateUncertaintyInMeters ? `<br/><span style="font-size:0.85em">± ${s.coordinateUncertaintyInMeters}m</span>` : ""}
           </div>`
