@@ -369,7 +369,14 @@ export default function LocationCarousel({
               const pct = summaries.length > 1 ? (i / (summaries.length - 1)) * 100 : 50;
               return (
                 <button key={i} onClick={() => goTo(i)} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-0.5" style={{ left: `${pct}%` }} title={`Stop ${i + 1}: ${s.locality}`}>
-                  <div className={`rounded-full transition-all ${isCurrent ? "w-2.5 h-2.5 ring-2 ring-primary ring-offset-1 ring-offset-background" : "w-1.5 h-1.5"} ${isUngeoref ? (isSuggested ? "bg-blue-500" : "bg-destructive") : "bg-primary"}`} />
+                  <div
+                    className={`rounded-full transition-all ${isCurrent ? "w-2.5 h-2.5 ring-2 ring-primary ring-offset-1 ring-offset-background" : "w-1.5 h-1.5"}`}
+                    style={{
+                      backgroundColor: isUngeoref
+                        ? (isSuggested ? "hsl(15, 90%, 50%)" : "hsl(45, 95%, 50%)")
+                        : "hsl(202, 100%, 35%)",
+                    }}
+                  />
                 </button>
               );
             })}
@@ -380,9 +387,9 @@ export default function LocationCarousel({
         </div>
         {/* Legend */}
         <div className="flex items-center gap-3 justify-center text-[9px] text-muted-foreground mt-1">
-          <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" /> Georeferenced</span>
-          {suggestions.length > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" /> Suggested</span>}
-          {ungeorefCount > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive" /> Not georeferenced ({ungeorefCount})</span>}
+          <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "hsl(202, 100%, 35%)" }} /> Georeferenced</span>
+          {suggestions.length > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "hsl(15, 90%, 50%)" }} /> Suggested</span>}
+          {ungeorefCount > 0 && <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "hsl(45, 95%, 50%)" }} /> Not georeferenced ({ungeorefCount})</span>}
         </div>
       </div>
     </div>
