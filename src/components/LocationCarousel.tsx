@@ -317,7 +317,16 @@ export default function LocationCarousel({
                 </div>
 
                 {/* Specimen number pills - always shown */}
-                <Tabs defaultValue="0" className="w-full mt-1">
+                <Tabs
+                  value={String(activeSpecimenTab)}
+                  onValueChange={(v) => {
+                    const idx = parseInt(v, 10);
+                    setActiveSpecimenTab(idx);
+                    const spec = loc.specimens[idx];
+                    if (spec) onSpecimenSelect?.(spec.gbifID);
+                  }}
+                  className="w-full mt-1"
+                >
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-muted-foreground font-medium flex-shrink-0">Number</span>
                     <TabsList className="h-6 p-0.5 flex-1">
