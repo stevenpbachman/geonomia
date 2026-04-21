@@ -178,7 +178,7 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         <div className="border rounded-md overflow-hidden">
           <div className="max-h-[280px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0">
+              <thead className="bg-muted sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium">Collector</th>
                   <th

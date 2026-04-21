@@ -39,7 +39,6 @@ export default function Index() {
 
   const handleLoad = (data: SpecimenRecord[]) => {
     setRecords(data);
-    setShowInput(false);
   };
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
