@@ -274,14 +274,13 @@ export default function LocationCarousel({
                   </div>
                 </div>
 
-                {/* Fixed fields */}
+                {/* Fixed fields - stable heights so panel never shifts */}
                 <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
-                  <span className="text-muted-foreground font-medium">Date</span>
-                  <span className="font-mono">{loc.date}</span>
+                  <span className="text-muted-foreground font-medium leading-[18px]">Date</span>
+                  <span className="font-mono truncate leading-[18px]">{loc.date?.trim() || "—"}</span>
 
-                  <span className="text-muted-foreground font-medium">Collector</span>
-                  <span className="truncate" title={loc.specimens[0]?.recordedBy}>{loc.specimens[0]?.recordedBy}</span>
-
+                  <span className="text-muted-foreground font-medium leading-[18px]">Collector</span>
+                  <span className="truncate leading-[18px]" title={loc.specimens[0]?.recordedBy}>{loc.specimens[0]?.recordedBy?.trim() || "—"}</span>
                 </div>
 
                 {/* Specimen number pills - always shown */}
@@ -291,7 +290,7 @@ export default function LocationCarousel({
                     <TabsList className="h-6 p-0.5 flex-1">
                       {loc.specimens.map((s, i) => (
                         <TabsTrigger key={s.gbifID} value={String(i)} className="text-[10px] px-1.5 py-0 h-5 flex-1">
-                          #{s.recordNumber}
+                          #{s.recordNumber?.trim() || "—"}
                         </TabsTrigger>
                       ))}
                     </TabsList>
@@ -299,10 +298,10 @@ export default function LocationCarousel({
                   {loc.specimens.map((s, i) => {
                     const species = s.scientificName?.trim() ? s.scientificName.split(" ").slice(0, 2).join(" ") : "—";
                     return (
-                      <TabsContent key={s.gbifID} value={String(i)} className="mt-0.5 min-h-[18px]">
-                        <div className="text-[11px]">
-                          <span className="text-muted-foreground font-medium mr-2">Species</span>
-                          <em className="truncate">{species}</em>
+                      <TabsContent key={s.gbifID} value={String(i)} forceMount className="mt-0.5 h-[18px] data-[state=inactive]:hidden">
+                        <div className="text-[11px] flex items-center gap-2 h-[18px] leading-[18px]">
+                          <span className="text-muted-foreground font-medium flex-shrink-0">Species</span>
+                          <em className="truncate min-w-0">{species}</em>
                         </div>
                       </TabsContent>
                     );
@@ -313,7 +312,7 @@ export default function LocationCarousel({
                 <div className="mt-1 space-y-0.5">
                   <span className="text-[10px] text-muted-foreground font-medium">Locality</span>
                   <div className="h-[32px] overflow-y-auto text-[11px] leading-tight border rounded px-1.5 py-1 bg-background">
-                    {loc.locality}
+                    {loc.locality?.trim() || "—"}
                   </div>
                 </div>
 
