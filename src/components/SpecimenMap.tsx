@@ -259,6 +259,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
 
     if (showGADM && gadmData) {
       const layer = L.geoJSON(gadmData.geojson, {
+        interactive: !measuring,
         style: () => ({
           color: "hsl(270, 50%, 55%)",
           weight: 2,
@@ -279,7 +280,7 @@ export default function SpecimenMap({ records, highlightedLocation, georefMode, 
       }).addTo(map);
       gadmLayerRef.current = layer;
     }
-  }, [showGADM, gadmData]);
+  }, [showGADM, gadmData, measuring]);
 
   // Switch tile layer
   useEffect(() => {
