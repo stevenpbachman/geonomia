@@ -54,7 +54,7 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         gbifID: String(r.gbifID ?? r.gbif_id ?? i),
         scientificName: r.scientificName ?? r.scientific_name ?? "",
         eventDate: (r.eventDate ?? r.event_date ?? "").replace("T00:00", ""),
-        recordNumber: String(r.recordNumber ?? r.record_number ?? ""),
+        recordNumber: String(r.recordNumber ?? r.record_number ?? r.recordNumber_mainNumber ?? ""),
         recordedBy: r.recordedBy ?? r.recorded_by ?? "",
         cluster_num_id: String(r.cluster_num_id ?? ""),
         decimalLongitude: r.decimalLongitude !== "" && r.decimalLongitude != null ? Number(r.decimalLongitude) : null,
