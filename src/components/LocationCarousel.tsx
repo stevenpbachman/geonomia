@@ -17,6 +17,8 @@ interface Props {
   onRequestMapClick?: () => void;
   onGeorefSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
   mapSlot?: React.ReactNode;
+  selectedGbifId?: string | null;
+  onSpecimenSelect?: (gbifId: string) => void;
 }
 
 function InlineGeorefForm({
