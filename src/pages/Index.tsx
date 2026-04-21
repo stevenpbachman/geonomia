@@ -7,6 +7,7 @@ import ClusterSearch from "@/components/ClusterSearch";
 import ItinerarySummary from "@/components/ItinerarySummary";
 import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
+import OccurrencesTable from "@/components/OccurrencesTable";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Leaf, Database, Search, Upload, Download } from "lucide-react";
