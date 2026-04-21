@@ -242,6 +242,7 @@ export default function LocationCarousel({
 
   const goTo = (idx: number) => {
     setCurrentIndex(idx);
+    setActiveSpecimenTab(0);
     const s = summaries[idx];
     if (s?.lat !== null && s?.lon !== null) {
       onLocationSelect?.(s);
@@ -254,6 +255,8 @@ export default function LocationCarousel({
         onLocationSelect?.(null);
       }
     }
+    const firstSpec = s?.specimens[0];
+    if (firstSpec) onSpecimenSelect?.(firstSpec.gbifID);
   };
 
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
