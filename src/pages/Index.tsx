@@ -167,6 +167,8 @@ export default function Index() {
                 georefMode={georefMode}
                 onRequestMapClick={handleRequestMapClick}
                 onGeorefSubmit={handleGeorefSubmit}
+                selectedGbifId={selectedGbifId}
+                onSpecimenSelect={setSelectedGbifId}
                 mapSlot={
                   <SpecimenMap
                     records={records}
@@ -176,6 +178,20 @@ export default function Index() {
                     suggestions={suggestions}
                   />
                 }
+              />
+            </section>
+
+            <section className="scroll-reveal space-y-2">
+              <h2 className="text-lg font-semibold">
+                Occurrences
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({records.length} records)
+                </span>
+              </h2>
+              <OccurrencesTable
+                records={records}
+                selectedGbifId={selectedGbifId}
+                onRowClick={(r) => setSelectedGbifId(r.gbifID)}
               />
             </section>
 
