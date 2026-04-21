@@ -7,6 +7,7 @@ import ClusterSearch from "@/components/ClusterSearch";
 import ItinerarySummary from "@/components/ItinerarySummary";
 import SpecimenMap from "@/components/SpecimenMap";
 import LocationCarousel from "@/components/LocationCarousel";
+import OccurrencesTable from "@/components/OccurrencesTable";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Leaf, Database, Search, Upload, Download } from "lucide-react";
@@ -31,6 +32,7 @@ export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
   const [showInput, setShowInput] = useState(true);
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
+  const [selectedGbifId, setSelectedGbifId] = useState<string | null>(null);
 
   // Georeferencing state
   const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -165,6 +167,8 @@ export default function Index() {
                 georefMode={georefMode}
                 onRequestMapClick={handleRequestMapClick}
                 onGeorefSubmit={handleGeorefSubmit}
+                selectedGbifId={selectedGbifId}
+                onSpecimenSelect={setSelectedGbifId}
                 mapSlot={
                   <SpecimenMap
                     records={records}
@@ -174,6 +178,20 @@ export default function Index() {
                     suggestions={suggestions}
                   />
                 }
+              />
+            </section>
+
+            <section className="scroll-reveal space-y-2">
+              <h2 className="text-lg font-semibold">
+                Occurrences
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({records.length} records)
+                </span>
+              </h2>
+              <OccurrencesTable
+                records={records}
+                selectedGbifId={selectedGbifId}
+                onRowClick={(r) => setSelectedGbifId(r.gbifID)}
               />
             </section>
 

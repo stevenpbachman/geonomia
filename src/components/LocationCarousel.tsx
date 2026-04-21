@@ -17,6 +17,8 @@ interface Props {
   onRequestMapClick?: () => void;
   onGeorefSubmit?: (suggestions: GeoreferenceSuggestion[]) => void;
   mapSlot?: React.ReactNode;
+  selectedGbifId?: string | null;
+  onSpecimenSelect?: (gbifId: string) => void;
 }
 
 function InlineGeorefForm({
@@ -164,8 +166,11 @@ export default function LocationCarousel({
   onRequestMapClick,
   onGeorefSubmit,
   mapSlot,
+  selectedGbifId,
+  onSpecimenSelect,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeSpecimenTab, setActiveSpecimenTab] = useState(0);
   const [panelOpen, setPanelOpen] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
@@ -180,11 +185,36 @@ export default function LocationCarousel({
 
   useEffect(() => {
     setCurrentIndex(0);
+    setActiveSpecimenTab(0);
     const first = summaries[0];
     onLocationSelect?.(first?.lat !== null && first?.lon !== null ? first : null);
   }, [summaries, onLocationSelect]);
 
   const loc = summaries[currentIndex];
+
+  // React to external specimen selection (clicking a row in the occurrences table)
+  useEffect(() => {
+    if (!selectedGbifId) return;
+    const locIdx = summaries.findIndex(s => s.specimens.some(sp => sp.gbifID === selectedGbifId));
+    if (locIdx === -1) return;
+    const specIdx = summaries[locIdx].specimens.findIndex(sp => sp.gbifID === selectedGbifId);
+    if (locIdx !== currentIndex) {
+      setCurrentIndex(locIdx);
+      const s = summaries[locIdx];
+      if (s?.lat !== null && s?.lon !== null) {
+        onLocationSelect?.(s);
+      } else {
+        const sugSpec = s?.specimens.find(sp => suggestionMap.has(sp.gbifID));
+        if (sugSpec) {
+          const sug = suggestionMap.get(sugSpec.gbifID)!;
+          onLocationSelect?.({ ...s, lat: sug.decimalLatitude, lon: sug.decimalLongitude });
+        } else {
+          onLocationSelect?.(null);
+        }
+      }
+    }
+    if (specIdx >= 0) setActiveSpecimenTab(specIdx);
+  }, [selectedGbifId, summaries, suggestionMap, onLocationSelect, currentIndex]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -212,6 +242,7 @@ export default function LocationCarousel({
 
   const goTo = (idx: number) => {
     setCurrentIndex(idx);
+    setActiveSpecimenTab(0);
     const s = summaries[idx];
     if (s?.lat !== null && s?.lon !== null) {
       onLocationSelect?.(s);
@@ -224,6 +255,8 @@ export default function LocationCarousel({
         onLocationSelect?.(null);
       }
     }
+    const firstSpec = s?.specimens[0];
+    if (firstSpec) onSpecimenSelect?.(firstSpec.gbifID);
   };
 
   const ungeorefCount = summaries.filter(s => s.lat === null || s.lon === null).length;
@@ -284,7 +317,16 @@ export default function LocationCarousel({
                 </div>
 
                 {/* Specimen number pills - always shown */}
-                <Tabs defaultValue="0" className="w-full mt-1">
+                <Tabs
+                  value={String(activeSpecimenTab)}
+                  onValueChange={(v) => {
+                    const idx = parseInt(v, 10);
+                    setActiveSpecimenTab(idx);
+                    const spec = loc.specimens[idx];
+                    if (spec) onSpecimenSelect?.(spec.gbifID);
+                  }}
+                  className="w-full mt-1"
+                >
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-muted-foreground font-medium flex-shrink-0">Number</span>
                     <TabsList className="h-6 p-0.5 flex-1">
