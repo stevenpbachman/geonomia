@@ -166,8 +166,11 @@ export default function LocationCarousel({
   onRequestMapClick,
   onGeorefSubmit,
   mapSlot,
+  selectedGbifId,
+  onSpecimenSelect,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeSpecimenTab, setActiveSpecimenTab] = useState(0);
   const [panelOpen, setPanelOpen] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
@@ -182,11 +185,36 @@ export default function LocationCarousel({
 
   useEffect(() => {
     setCurrentIndex(0);
+    setActiveSpecimenTab(0);
     const first = summaries[0];
     onLocationSelect?.(first?.lat !== null && first?.lon !== null ? first : null);
   }, [summaries, onLocationSelect]);
 
   const loc = summaries[currentIndex];
+
+  // React to external specimen selection (clicking a row in the occurrences table)
+  useEffect(() => {
+    if (!selectedGbifId) return;
+    const locIdx = summaries.findIndex(s => s.specimens.some(sp => sp.gbifID === selectedGbifId));
+    if (locIdx === -1) return;
+    const specIdx = summaries[locIdx].specimens.findIndex(sp => sp.gbifID === selectedGbifId);
+    if (locIdx !== currentIndex) {
+      setCurrentIndex(locIdx);
+      const s = summaries[locIdx];
+      if (s?.lat !== null && s?.lon !== null) {
+        onLocationSelect?.(s);
+      } else {
+        const sugSpec = s?.specimens.find(sp => suggestionMap.has(sp.gbifID));
+        if (sugSpec) {
+          const sug = suggestionMap.get(sugSpec.gbifID)!;
+          onLocationSelect?.({ ...s, lat: sug.decimalLatitude, lon: sug.decimalLongitude });
+        } else {
+          onLocationSelect?.(null);
+        }
+      }
+    }
+    if (specIdx >= 0) setActiveSpecimenTab(specIdx);
+  }, [selectedGbifId, summaries, suggestionMap, onLocationSelect, currentIndex]);
 
   useEffect(() => {
     const panel = panelRef.current;
