@@ -32,6 +32,7 @@ export default function Index() {
   const [records, setRecords] = useState<SpecimenRecord[] | null>(null);
   const [showInput, setShowInput] = useState(true);
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
+  const [selectedGbifId, setSelectedGbifId] = useState<string | null>(null);
 
   // Georeferencing state
   const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
