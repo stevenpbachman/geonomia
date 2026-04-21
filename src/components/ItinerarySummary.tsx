@@ -17,10 +17,24 @@ export default function ItinerarySummary({ records }: Props) {
     { icon: Globe, label: "Georeferenced", value: summary.georeferenced },
   ];
 
+  const clusterIds = Array.from(
+    new Set(records.map(r => r.cluster_num_id).filter((c): c is string => !!c))
+  );
+
   return (
     <div className="bg-card rounded-lg border p-6 shadow-sm space-y-5">
       <div>
-        <h3 className="text-lg font-semibold mb-1">Itinerary Overview</h3>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <h3 className="text-lg font-semibold">Itinerary Overview</h3>
+          {clusterIds.map(id => (
+            <span
+              key={id}
+              className="inline-flex items-center rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs font-mono font-medium"
+            >
+              Cluster #{id}
+            </span>
+          ))}
+        </div>
         <p className="text-sm text-muted-foreground">
           {summary.primaryCollector} collected {summary.totalSpecimens} specimens
           across {summary.uniqueLocalities} localities
