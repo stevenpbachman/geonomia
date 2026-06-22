@@ -1,6 +1,7 @@
 import { SpecimenRecord } from "@/lib/types";
 import { getItinerarySummary } from "@/lib/analysis";
 import { Leaf, MapPin, Calendar, Users, Globe } from "lucide-react";
+import MiniMap from "./MiniMap";
 
 interface Props {
   records: SpecimenRecord[];
@@ -54,15 +55,19 @@ export default function ItinerarySummary({ records }: Props) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-muted rounded-lg p-3 text-center">
-            <s.icon className="w-4 h-4 mx-auto mb-1 text-primary" />
-            <div className="text-xl font-semibold tabular-nums">{s.value}</div>
-            <div className="text-xs text-muted-foreground">{s.label}</div>
-          </div>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-[1fr_14rem] items-stretch">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-muted rounded-lg p-3 text-center">
+              <s.icon className="w-4 h-4 mx-auto mb-1 text-primary" />
+              <div className="text-xl font-semibold tabular-nums">{s.value}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <MiniMap records={records} />
       </div>
+
 
       {summary.latRange && summary.lonRange && (
         <p className="text-xs text-muted-foreground font-mono">
