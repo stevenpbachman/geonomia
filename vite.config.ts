@@ -12,11 +12,17 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     proxy: {
-      "/datasette": {
+      "/datasette-br": {
+        target: "https://nickynicolson-geonomia-br.hf.space",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/datasette-br/, ""),
+      },
+      "/datasette-my": {
         target: "https://nickynicolson-geonomia-my.hf.space",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/datasette/, ""),
+        rewrite: (path) => path.replace(/^\/datasette-my/, ""),
       },
     },
   },

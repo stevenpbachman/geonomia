@@ -1,12 +1,20 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SpecimenRecord } from "@/lib/types";
 import {
   ClusterResult,
   searchClusters,
   fetchClusterOccurrences,
 } from "@/lib/datasette";
+import { COUNTRIES, CountryCode, DEFAULT_COUNTRY } from "@/lib/countries";
 import { Search, Loader2, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 
 interface Props {
@@ -16,7 +24,14 @@ interface Props {
 type SortColumn = "eventDate_min" | "cluster_num_id" | "cluster_num_id_count" | "eventDate_unique_count" | "georef_completeness";
 type SortDirection = "asc" | "desc";
 
+const COUNTRY_STORAGE_KEY = "geonomia.country";
+
 export default function ClusterSearch({ onDataLoaded }: Props) {
+  const [country, setCountry] = useState<CountryCode>(() => {
+    if (typeof window === "undefined") return DEFAULT_COUNTRY;
+    const saved = window.localStorage.getItem(COUNTRY_STORAGE_KEY);
+    return saved && saved in COUNTRIES ? (saved as CountryCode) : DEFAULT_COUNTRY;
+  });
   const [collector, setCollector] = useState("");
   const [yearStart, setYearStart] = useState("");
   const [yearEnd, setYearEnd] = useState("");
@@ -29,11 +44,16 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
   const [sortColumn, setSortColumn] = useState<SortColumn>("eventDate_min");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  useEffect(() => {
+    window.localStorage.setItem(COUNTRY_STORAGE_KEY, country);
+  }, [country]);
+
   const handleSearch = async () => {
     setError(null);
     setSearching(true);
     try {
       const data = await searchClusters({
+        country,
         collector: collector || undefined,
         yearStart: yearStart ? parseInt(yearStart) : undefined,
         yearEnd: yearEnd ? parseInt(yearEnd) : undefined,
@@ -53,7 +73,7 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
     setLoading(cluster.cluster_num_id);
     setError(null);
     try {
-      const rows = await fetchClusterOccurrences(cluster.cluster_num_id);
+      const rows = await fetchClusterOccurrences(cluster.cluster_num_id, cluster.country);
       const records: SpecimenRecord[] = rows.map((r: any, i: number) => ({
         gbifID: String(r.gbifID ?? r.gbif_id ?? i),
         scientificName: r.scientificName ?? r.scientific_name ?? "",
@@ -130,6 +150,23 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
       <div>
         <h3 className="text-sm font-medium mb-2">Search clusters</h3>
         <div className="flex flex-wrap gap-3 items-end">
+          <div className="w-36">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Country
+            </label>
+            <Select value={country} onValueChange={(v) => setCountry(v as CountryCode)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(COUNTRIES).map(([code, cfg]) => (
+                  <SelectItem key={code} value={code}>
+                    {cfg.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex-1 min-w-[180px]">
             <label className="text-xs text-muted-foreground mb-1 block">
               Collector name
