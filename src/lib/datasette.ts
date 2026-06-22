@@ -19,12 +19,16 @@ export async function searchClusters({
   yearEnd,
   georefMin,
   georefMax,
+  numberMin,
+  numberMax,
 }: {
   collector?: string;
   yearStart?: number;
   yearEnd?: number;
   georefMin?: number;
   georefMax?: number;
+  numberMin?: number;
+  numberMax?: number;
 }): Promise<ClusterResult[]> {
   const conditions: string[] = [];
   const params: Record<string, string> = {};
@@ -48,6 +52,14 @@ export async function searchClusters({
   if (georefMax !== undefined) {
     conditions.push("georef_completeness <= :georefMax");
     params.georefMax = String(georefMax);
+  }
+  if (numberMin !== undefined) {
+    conditions.push("recordNumber_mainNumber_min >= :numberMin");
+    params.numberMin = String(numberMin);
+  }
+  if (numberMax !== undefined) {
+    conditions.push("recordNumber_mainNumber_max <= :numberMax");
+    params.numberMax = String(numberMax);
   }
 
   if (conditions.length === 0) return [];

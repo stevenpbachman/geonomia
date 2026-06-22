@@ -20,6 +20,8 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
   const [collector, setCollector] = useState("");
   const [yearStart, setYearStart] = useState("");
   const [yearEnd, setYearEnd] = useState("");
+  const [numberMin, setNumberMin] = useState("");
+  const [numberMax, setNumberMax] = useState("");
   const [results, setResults] = useState<ClusterResult[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
@@ -35,6 +37,8 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
         collector: collector || undefined,
         yearStart: yearStart ? parseInt(yearStart) : undefined,
         yearEnd: yearEnd ? parseInt(yearEnd) : undefined,
+        numberMin: numberMin ? parseInt(numberMin) : undefined,
+        numberMax: numberMax ? parseInt(numberMax) : undefined,
       });
       setResults(data);
       if (data.length === 0) setError("No clusters found for this search.");
@@ -157,6 +161,30 @@ export default function ClusterSearch({ onDataLoaded }: Props) {
               value={yearEnd}
               onChange={(e) => setYearEnd(e.target.value)}
               placeholder="1990"
+            />
+          </div>
+          <div className="w-24">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Number from
+            </label>
+            <Input
+              type="number"
+              value={numberMin}
+              onChange={(e) => setNumberMin(e.target.value)}
+              placeholder="1"
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+          </div>
+          <div className="w-24">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Number to
+            </label>
+            <Input
+              type="number"
+              value={numberMax}
+              onChange={(e) => setNumberMax(e.target.value)}
+              placeholder="9999"
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
           <Button onClick={handleSearch} disabled={searching} className="gap-2">
