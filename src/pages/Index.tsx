@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
+import geonomiaLogo from "@/assets/geonomia-logo.png.asset.json";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
@@ -97,11 +98,30 @@ export default function Index() {
       <header className="border-b bg-card">
         <div className="container max-w-5xl py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <Leaf className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <a
+              href="https://github.com/geonomia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0"
+              aria-label="Geonomia project home page"
+            >
+              <img
+                src={geonomiaLogo.url}
+                alt="Geonomia logo"
+                className="w-10 h-10 object-contain"
+              />
+            </a>
             <div>
-              <h1 className="text-xl font-bold leading-tight">Specimen Itinerary</h1>
+              <h1 className="text-xl font-bold leading-tight">
+                <a
+                  href="https://github.com/geonomia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Geonomia Explorer
+                </a>
+              </h1>
               <p className="text-sm text-muted-foreground">
                 Visualise botanical collection sequences
               </p>
