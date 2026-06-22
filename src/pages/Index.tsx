@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
+import geonomiaLogo from "@/assets/geonomia-logo.png.asset.json";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
 import DataInput from "@/components/DataInput";
