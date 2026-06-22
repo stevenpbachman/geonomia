@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { SpecimenRecord, LocationSummary, GeoreferenceSuggestion } from "@/lib/types";
 import { sampleData } from "@/lib/sampleData";
 import { getLocationSummaries } from "@/lib/analysis";
@@ -33,6 +33,8 @@ export default function Index() {
   const [showInput, setShowInput] = useState(true);
   const [highlightedLocation, setHighlightedLocation] = useState<LocationSummary | null>(null);
   const [selectedGbifId, setSelectedGbifId] = useState<string | null>(null);
+  const summaryRef = useRef<HTMLElement | null>(null);
+  const shouldScrollRef = useRef(false);
 
   // Georeferencing state
   const [mapClickCoords, setMapClickCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -40,8 +42,18 @@ export default function Index() {
   const [suggestions, setSuggestions] = useState<GeoreferenceSuggestion[]>(loadSuggestions);
 
   const handleLoad = (data: SpecimenRecord[]) => {
+    shouldScrollRef.current = true;
     setRecords(data);
   };
+
+  useEffect(() => {
+    if (records && shouldScrollRef.current && summaryRef.current) {
+      shouldScrollRef.current = false;
+      requestAnimationFrame(() => {
+        summaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [records]);
 
   const locationSummaries = useMemo(() => records ? getLocationSummaries(records) : [], [records]);
 
@@ -148,7 +160,7 @@ export default function Index() {
 
         {records && (
           <>
-            <section className="scroll-reveal">
+            <section ref={summaryRef} className="scroll-reveal scroll-mt-4">
               <ItinerarySummary records={records} />
             </section>
 

@@ -14,7 +14,7 @@ export default function ItinerarySummary({ records }: Props) {
     { icon: Leaf, label: "Unique taxa", value: summary.uniqueSpecies },
     { icon: MapPin, label: "Localities", value: summary.uniqueLocalities },
     { icon: Calendar, label: "Collecting days", value: summary.collectingDays },
-    { icon: Globe, label: "Georeferenced", value: summary.georeferenced },
+    { icon: Globe, label: "Coordinates", value: summary.georeferenced },
   ];
 
   const clusterIds = Array.from(
@@ -37,7 +37,13 @@ export default function ItinerarySummary({ records }: Props) {
         </div>
         <p className="text-sm text-muted-foreground">
           {summary.primaryCollector} collected {summary.totalSpecimens} specimens
-          across {summary.uniqueLocalities} localities
+          {summary.recordNumberRange && (
+            <> (numbers{" "}
+              <span className="font-mono">{summary.recordNumberRange.min}</span>–
+              <span className="font-mono">{summary.recordNumberRange.max}</span>)
+            </>
+          )}
+          {" "}across {summary.uniqueLocalities} localities
           {summary.dateRange && (
             <> from{" "}
               <span className="font-mono">{summary.dateRange.start}</span> to{" "}

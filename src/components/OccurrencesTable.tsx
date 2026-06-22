@@ -67,6 +67,9 @@ export default function OccurrencesTable({ records, selectedGbifId, onRowClick }
         <table className="w-full text-xs">
           <thead className="bg-muted sticky top-0 z-10 shadow-sm">
             <tr className="text-left">
+              <th className="px-2 py-1.5 font-medium cursor-pointer select-none hover:bg-muted/80" onClick={() => toggleSort("recordedBy")}>
+                Collector{arrow("recordedBy")}
+              </th>
               <th className="px-2 py-1.5 font-medium cursor-pointer select-none hover:bg-muted/80" onClick={() => toggleSort("recordNumber")}>
                 #{arrow("recordNumber")}
               </th>
@@ -75,9 +78,6 @@ export default function OccurrencesTable({ records, selectedGbifId, onRowClick }
               </th>
               <th className="px-2 py-1.5 font-medium cursor-pointer select-none hover:bg-muted/80" onClick={() => toggleSort("scientificName")}>
                 Species{arrow("scientificName")}
-              </th>
-              <th className="px-2 py-1.5 font-medium cursor-pointer select-none hover:bg-muted/80" onClick={() => toggleSort("recordedBy")}>
-                Collector{arrow("recordedBy")}
               </th>
               <th className="px-2 py-1.5 font-medium cursor-pointer select-none hover:bg-muted/80" onClick={() => toggleSort("locality")}>
                 Locality{arrow("locality")}
@@ -100,6 +100,7 @@ export default function OccurrencesTable({ records, selectedGbifId, onRowClick }
                     isSelected ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-accent/50"
                   }`}
                 >
+                  <td className="px-2 py-1 truncate max-w-[140px]" title={r.recordedBy}>{r.recordedBy?.trim() || "—"}</td>
                   <td className="px-2 py-1 font-mono font-medium">{r.recordNumber?.trim() || "—"}</td>
                   <td className="px-2 py-1 font-mono whitespace-nowrap">{r.eventDate?.trim() || "—"}</td>
                   <td className="px-2 py-1">
@@ -107,7 +108,6 @@ export default function OccurrencesTable({ records, selectedGbifId, onRowClick }
                       {r.scientificName?.split(" ").slice(0, 2).join(" ") || "—"}
                     </em>
                   </td>
-                  <td className="px-2 py-1 truncate max-w-[140px]" title={r.recordedBy}>{r.recordedBy?.trim() || "—"}</td>
                   <td className="px-2 py-1 truncate max-w-[220px]" title={r.locality}>{r.locality?.trim() || "—"}</td>
                   <td className="px-2 py-1 font-mono whitespace-nowrap">
                     {hasCoords ? (

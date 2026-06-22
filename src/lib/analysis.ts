@@ -64,6 +64,13 @@ export function getItinerarySummary(records: SpecimenRecord[]) {
       ]
     : null;
 
+  const recordNumbers = sorted
+    .map((r) => parseInt(r.recordNumber, 10))
+    .filter((n) => !isNaN(n));
+  const recordNumberRange = recordNumbers.length
+    ? { min: Math.min(...recordNumbers), max: Math.max(...recordNumbers) }
+    : null;
+
   return {
     totalSpecimens: sorted.length,
     dateRange: uniqueDates.length
@@ -78,6 +85,7 @@ export function getItinerarySummary(records: SpecimenRecord[]) {
     lonRange,
     primaryCollector: collectors[0] || "Unknown",
     clusterIds: [...new Set(sorted.map((r) => r.cluster_num_id))],
+    recordNumberRange,
   };
 }
 
